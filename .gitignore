@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.egg
+dist/
+build/
+.pytest_cache/
+
+# Environnement
+.env
+*.env.local
+
+# Base de données
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# OS
+Thumbs.db
