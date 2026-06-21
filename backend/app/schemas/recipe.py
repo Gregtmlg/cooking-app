@@ -20,12 +20,12 @@ class RecipeUpdate(RecipeBase):
     prep_time: int | None = None
     cook_time: int | None = None
     servings: int | None = None
-    ingredients: list[RecipeIngredientCreate] | None = None
+    ingredients: list[RecipeIngredientCreate] | None = None # Optionnel — peut être absent, vaut None si absent
 
 class RecipeRead(RecipeBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    ingredients: list[RecipeIngredientRead] | None
+    ingredients: list[RecipeIngredientRead] | None  # Obligatoire — doit être fourni, peut valoir None
     
     model_config = {"from_attributes": True}
