@@ -6,10 +6,10 @@ from app.models.recipe_ingredient import RecipeIngredient
 from app.schemas.recipe import RecipeCreate, RecipeUpdate
 
 
-def get_recipe(db : Session, recipe_id : int) -> Recipe | None:
+def get_recipe(db : Session, recipe_id : int) -> Recipe | None: # Récupère une recette par son ID. Si la recette n'existe pas, retourne None.
     return db.query(Recipe).filter(Recipe.id == recipe_id).first()
 
-def get_recipes(db : Session, skip : int = 0, limit : int = 100) -> list[Recipe]:
+def get_recipes(db : Session, skip : int = 0, limit : int = 100) -> list[Recipe]:   # Récupère tous les recettes avec pagination. Les paramètres skip et limit permettent de contrôler le nombre de recettes retournées et à partir de quel index commencer la récupération. Par défaut, il retourne les 100 premières recettes.
     return db.query(Recipe).offset(skip).limit(limit).all()
 
 def create_recipe(db: Session, recipe_in: RecipeCreate) -> Recipe:
