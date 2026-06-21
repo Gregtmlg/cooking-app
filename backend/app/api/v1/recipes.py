@@ -33,7 +33,7 @@ def update_recipe(recipe_id: int, recipe_in: RecipeUpdate, db: Session = Depends
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cette recette n'existe pas.")
     return db_recipe
 
-@router.delete("/{recipe_id}", response_model=RecipeRead)
+@router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_recipe(recipe_id: int, db: Session = Depends(get_db)):
     db_recipe = recipe_service.delete_recipe(db, recipe_id)
     if db_recipe is None:
