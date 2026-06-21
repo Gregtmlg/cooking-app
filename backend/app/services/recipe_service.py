@@ -23,6 +23,7 @@ def create_recipe(db: Session, recipe_in: RecipeCreate) -> Recipe:
     )
     db.add(db_recipe)
     db.flush()  # .flush() permet de générer l'ID du nouvel objet Recipe avant de l'utiliser pour créer les relations avec les ingrédients. Cela garantit que l'ID est disponible pour les relations, même si la transaction n'est pas encore validée (commit).
+    db.commit()
     db.refresh(db_recipe)
     return db_recipe
 
