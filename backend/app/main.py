@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1 import recipes as recipes_router
+from app.api.v1 import ingredients as ingredients_router
 
 from app.core.config import settings
 
@@ -26,5 +27,10 @@ def health_check():
 
 app.include_router(
     recipes_router.router,
+    prefix="/api/v1",
+)
+
+app.include_router(
+    ingredients_router.router,
     prefix="/api/v1",
 )

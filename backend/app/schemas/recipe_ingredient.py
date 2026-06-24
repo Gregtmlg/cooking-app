@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from app.schemas.ingredient import IngredientRead
 
 class RecipeIngredientBase(BaseModel):
-    ingredient_id: int
+    ingredient_name: str
     quantity: float | None = None   # Optionnel — peut être absent, vaut None si absent
     unit: str | None = None
 
