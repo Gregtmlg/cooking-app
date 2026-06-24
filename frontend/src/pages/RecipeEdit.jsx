@@ -91,10 +91,6 @@ function RecipeEdit() {
           <textarea name="description" value={form.description} onChange={handleChange} placeholder="Une sauce délicieuse pour accompagner vos pâtes." />
         </div>
         <div>
-          <label for="instructions">Instructions</label>
-          <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Mélanger les ingrédients... Pétrir la pâte..." />
-        </div>
-        <div>
           <label for="prep_time">Temps de préparation (minutes)</label>
           <input type="number" name="prep_time" value={form.prep_time} onChange={handleChange} placeholder="10" />
         </div>
@@ -105,6 +101,10 @@ function RecipeEdit() {
         <div>
           <label for="servings">Nombre de portions</label>
           <input type="number" name="servings" value={form.servings} onChange={handleChange} placeholder="6" />
+        </div>
+        <div>
+          <label for="instructions">Instructions</label>
+          <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Mélanger les ingrédients... Pétrir la pâte..." />
         </div>
           <button type="submit">Enregistrer la recette</button>
       </form>

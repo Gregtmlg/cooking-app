@@ -51,14 +51,19 @@ function RecipeDetail() {
     // + un <Link> pour modifier
     // + un <button> pour supprimer qui appelle handleDelete
     <div>
-      <h2>{recipe.title}</h2>
-      <p>{recipe.description}</p>
-      <p>Temps de préparation : {recipe.prep_time} minutes</p>
-      <p>Temps de cuisson : {recipe.cook_time} minutes</p>
-      <p>Nombre de portions : {recipe.servings}</p>
-      <p>{recipe.instructions}</p>
-      <Link to={`/recipes/${id}/edit`}>Modifier</Link>
-      <button onClick={handleDelete}>Supprimer</button>
+      <div>
+      <Link to="/">Retour à la liste</Link>
+      </div>
+      <div>
+        <h2>{recipe.title}</h2>
+        <p>{recipe.description}</p>
+        <p>Temps de préparation : {recipe.prep_time} minutes</p>
+        <p>Temps de cuisson : {recipe.cook_time} minutes</p>
+        <p>Nombre de portions : {recipe.servings}</p>
+        <p>{recipe.instructions}</p>
+        <Link to={`/recipes/${id}/edit`}>Modifier</Link>
+        <button onClick={handleDelete}>Supprimer</button>
+      </div>
     </div>
   )
 }

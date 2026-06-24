@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getRecipes } from '../api/recipes'
+import { Link } from 'react-router-dom'
 
 function RecipeList() {
   const [recipes, setRecipes] = useState([])
@@ -32,7 +33,9 @@ function RecipeList() {
       ) : (
         <ul>
           {recipes.map((recipe) => (
-            <li key={recipe.id}>{recipe.title}</li>
+            <li key={recipe.id}>
+              <Link to={`/recipes/${recipe.id}`}>{recipe.title}</Link>
+            </li>
           ))}
         </ul>
       )}
