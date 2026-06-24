@@ -20,7 +20,7 @@ export async function createRecipe(data) {
 }
 
 export async function updateRecipe(id, data) {
-    const response = await api.put(`/api/v1/recipes/${id}/`, data)
+    const response = await api.patch(`/api/v1/recipes/${id}/`, data)
     return response.data
 }
 
