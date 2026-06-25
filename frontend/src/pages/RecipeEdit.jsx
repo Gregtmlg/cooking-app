@@ -56,9 +56,9 @@ function RecipeEdit() {
     try {
       const data = {
         ...form,
-        prep_time: parseInt(form.prep_time),
-        cook_time: parseInt(form.cook_time),
-        servings: parseInt(form.servings)
+        prep_time: form.prep_time ? parseInt(form.prep_time) : null,
+        cook_time: form.cook_time ? parseInt(form.cook_time) : null,
+        servings: form.servings ? parseInt(form.servings) : null
       }
 
       await updateRecipe(id, data)

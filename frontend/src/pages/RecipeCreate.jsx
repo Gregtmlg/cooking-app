@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createRecipe } from '../api/recipes'
+import { getIngredients } from '../api/recipes'
 
 function RecipeCreate() {
   const navigate = useNavigate()
@@ -28,9 +29,9 @@ function RecipeCreate() {
       // 3. naviguer vers '/'
       const data = {
         ...form,
-        prep_time: parseInt(form.prep_time),
-        cook_time: parseInt(form.cook_time),
-        servings: parseInt(form.servings)
+        prep_time: form.prep_time ? parseInt(form.prep_time) : null,
+        cook_time: form.cook_time ? parseInt(form.cook_time) : null,
+        servings: form.servings ? parseInt(form.servings) : null
       }
       if (!form.title.trim()) {
         setError('Votre recette doit avoir un nom.')
