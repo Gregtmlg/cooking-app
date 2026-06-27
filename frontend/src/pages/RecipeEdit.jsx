@@ -20,9 +20,13 @@ function RecipeEdit() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  // Charge tous les ingrédients existants au montage pour alimenter l'autocomplétion.
+  // Stratégie "fetch all + filtre local" : volume faible, une seule requête suffit.
   useEffect(() => {
   async function fetchData() {
     try {
+      // Les deux requêtes sont indépendantes : on les lance en parallèle avec Promise.all
+      // pour réduire le temps de chargement (au lieu de les enchaîner l'une après l'autre).
       const [recipeData, ingredientsData] = await Promise.all([
         getRecipe(id),
         getIngredients()
@@ -35,6 +39,8 @@ function RecipeEdit() {
         cook_time: recipeData.cook_time ?? '',
         servings: recipeData.servings ?? ''
       })
+      // Transforme le format API { ingredient: { name }, quantity, unit }
+      // vers le format state { ingredient_name, quantity, unit } attendu par le formulaire.
       setIngredients(
         recipeData.ingredients && recipeData.ingredients.length > 0
           ? recipeData.ingredients.map(ri => ({
@@ -55,11 +61,12 @@ function RecipeEdit() {
 }, [id])
 
   function handleChange(e) {
-    // identique à RecipeCreate
     const { name, value } = e.target
     setForm({ ...form, [name]: value })
   }
 
+  // Met à jour un champ d'une ligne ingrédient sans modifier le state directement.
+  // .map() retourne un nouveau tableau ; seule la ligne à l'index `index` est modifiée.
   function handleIngredientChange(index, e) {
     const { name, value } = e.target
     const updated = ingredients.map((ing, i) =>
@@ -88,6 +95,8 @@ function RecipeEdit() {
         prep_time: form.prep_time ? parseInt(form.prep_time) : null,
         cook_time: form.cook_time ? parseInt(form.cook_time) : null,
         servings: form.servings ? parseInt(form.servings) : null,
+        // Filtre les lignes vides avant envoi, normalise les noms en minuscules
+        // et convertit quantity en float (les inputs retournent toujours des strings).
         ingredients: ingredients
           .filter(ing => ing.ingredient_name.trim() !== '')
           .map(ing => ({
@@ -107,8 +116,6 @@ function RecipeEdit() {
   if (error) return <p>Erreur : {error}</p>
 
   return (
-    // identique à RecipeCreate, titre "Modifier la recette"Pourtan
-    // bouton "Enregistrer" au lieu de "Créer"
     <div>
       <h2>Modifier la recette</h2>
       {error && <p>Erreur : {error}</p>}
@@ -119,12 +126,12 @@ function RecipeEdit() {
 }}>
         <br />
         <div>
-          <label for="title">Nom de la recette</label>
+          <label htmlFor="title">Nom de la recette</label>
           <input name="title" value={form.title} onChange={handleChange} placeholder="Sauce Jiper" />
         </div>
         <br />
         <div>
-          <label for="description">Description</label>
+          <label htmlFor="description">Description</label>
           <textarea name="description" value={form.description} onChange={handleChange} placeholder="Une sauce délicieuse pour accompagner vos pâtes." />
         </div>
         <br />
@@ -167,22 +174,22 @@ function RecipeEdit() {
         <br />
         <br />
         <div>
-          <label for="instructions">Instructions</label>
+          <label htmlFor="instructions">Instructions</label>
           <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Mélanger les ingrédients... Pétrir la pâte..." />
         </div>
         <br />
         <div>
-          <label for="prep_time">Temps de préparation (minutes)</label>
+          <label htmlFor="prep_time">Temps de préparation (minutes)</label>
           <input type="number" name="prep_time" value={form.prep_time} onChange={handleChange} placeholder="10" />
         </div>
         <br />
         <div>
-          <label for="cook_time">Temps de cuisson (minutes)</label>
+          <label htmlFor="cook_time">Temps de cuisson (minutes)</label>
           <input type="number" name="cook_time" value={form.cook_time} onChange={handleChange} placeholder="30" />
         </div>
         <br />
         <div>
-          <label for="servings">Nombre de portions</label>
+          <label htmlFor="servings">Nombre de portions</label>
           <input type="number" name="servings" value={form.servings} onChange={handleChange} placeholder="6" />
         </div>
 

@@ -18,6 +18,8 @@ function RecipeCreate() {
   const [allIngredients, setAllIngredients] = useState([])
   const [error, setError] = useState(null)
 
+  // Charge tous les ingrédients existants au montage pour alimenter l'autocomplétion.
+  // Stratégie "fetch all + filtre local" : volume faible, une seule requête suffit.
   useEffect(() => {
     async function fetchIngredients() {
       try {
@@ -35,6 +37,8 @@ function RecipeCreate() {
     setForm({ ...form, [name]: value })
   }
 
+  // Met à jour un champ d'une ligne ingrédient sans modifier le state directement.
+  // .map() retourne un nouveau tableau ; seule la ligne à l'index `index` est modifiée.
   function handleIngredientChange(index, e) {
     const { name, value } = e.target
     const updated = ingredients.map((ing, i) =>
@@ -63,6 +67,8 @@ function RecipeCreate() {
         prep_time: form.prep_time ? parseInt(form.prep_time) : null,
         cook_time: form.cook_time ? parseInt(form.cook_time) : null,
         servings: form.servings ? parseInt(form.servings) : null,
+        // Filtre les lignes vides avant envoi, normalise les noms en minuscules
+        // et convertit quantity en float (les inputs retournent toujours des strings).
         ingredients: ingredients
           .filter(ing => ing.ingredient_name.trim() !== '')
           .map(ing => ({

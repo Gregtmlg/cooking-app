@@ -9,7 +9,7 @@ from app.schemas.recipe import RecipeCreate, RecipeUpdate
 def get_recipe(db : Session, recipe_id : int) -> Recipe | None: # Récupère une recette par son ID. Si la recette n'existe pas, retourne None.
     return db.query(Recipe).filter(Recipe.id == recipe_id).first()
 
-def get_recipes(db : Session, skip : int = 0, limit : int = 100) -> list[Recipe]:   # Récupère tous les recettes avec pagination. Les paramètres skip et limit permettent de contrôler le nombre de recettes retournées et à partir de quel index commencer la récupération. Par défaut, il retourne les 100 premières recettes.
+def get_recipes(db : Session, skip : int = 0, limit : int = 100) -> list[Recipe]:   # Récupère toutes les recettes avec pagination. Les paramètres skip et limit permettent de contrôler le nombre de recettes retournées et à partir de quel index commencer la récupération. Par défaut, il retourne les 100 premières recettes.
     return db.query(Recipe).offset(skip).limit(limit).all()
 
 def create_recipe(db: Session, recipe_in: RecipeCreate) -> Recipe:
@@ -23,6 +23,9 @@ def create_recipe(db: Session, recipe_in: RecipeCreate) -> Recipe:
     )
     db.add(db_recipe)
     db.flush()  # .flush() permet de générer l'ID du nouvel objet Recipe avant de l'utiliser pour créer les relations avec les ingrédients. Cela garantit que l'ID est disponible pour les relations, même si la transaction n'est pas encore validée (commit).
+    # Création des associations recette-ingrédient.
+    # get_or_create_ingredient évite les doublons : si l'ingrédient existe déjà en base
+    # (même nom normalisé en minuscules), il est réutilisé ; sinon il est créé.
     for ingredients_in in recipe_in.ingredients:
         db_ingredient = get_or_create_ingredient(db, ingredients_in.ingredient_name)
         db_recipe_ingredient = RecipeIngredient(
@@ -42,6 +45,8 @@ def update_recipe(db: Session, recipe_id: int, recipe_in: RecipeUpdate) -> Recip
         return None
 
     for field, value in recipe_in.model_dump(exclude_unset=True).items():   # .model_dump(exclude_unset=True) permet de ne récupérer que les champs qui ont été modifiés dans l'objet RecipeUpdate, en excluant ceux qui n'ont pas été définis (unset). Cela permet d'éviter de réécrire des valeurs par défaut ou nulles pour les champs non modifiés. 
+        # Stratégie "replace" : on supprime tous les ingrédients existants de la recette
+        # et on recrée ceux envoyés par le formulaire. Plus simple qu'un diff ligne par ligne.
         if field == "ingredients":
             # Supprimer les ingrédients existants
             db.query(RecipeIngredient).filter(RecipeIngredient.recipe_id == recipe_id).delete()

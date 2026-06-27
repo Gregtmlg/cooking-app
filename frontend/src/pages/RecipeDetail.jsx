@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, deleteRecipe } from '../api/recipes'
 
+// Capitalise la première lettre d'un nom d'ingrédient pour l'affichage.
+// Les noms sont stockés en minuscules en base (normalisés à la création).
 function capitalize(str) {
   if (!str) return ''
   return str.charAt(0).toUpperCase() + str.slice(1)
@@ -15,8 +17,6 @@ function RecipeDetail() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // à compléter — même structure que RecipeList
-    // mais appelle getRecipe(id)
     async function fetchRecipe() {
       try {
         const data = await getRecipe(id)
@@ -31,15 +31,10 @@ function RecipeDetail() {
     fetchRecipe()
   }, [id])
 
-  // à compléter — même guards que RecipeList
   if (loading) return <p>Chargement...</p>
   if (error) return <p>Erreur : {error}</p>
 
   async function handleDelete() {
-    // à compléter :
-    // 1. demander confirmation avec window.confirm
-    // 2. si confirmé : appeler deleteRecipe(id)
-    // 3. naviguer vers '/'
     const confirmed = window.confirm('Êtes-vous sûr de vouloir supprimer cette recette ?')
     if (confirmed) {
       try {
@@ -52,9 +47,6 @@ function RecipeDetail() {
   }
 
   return (
-    // à compléter — afficher les champs de recipe
-    // + un <Link> pour modifier
-    // + un <button> pour supprimer qui appelle handleDelete
     <div>
       <div>
       <Link to="/">Retour à la liste</Link>

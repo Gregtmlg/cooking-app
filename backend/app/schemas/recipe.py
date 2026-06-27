@@ -11,7 +11,7 @@ class RecipeBase(BaseModel):
     servings: int | None = None
 
 class RecipeCreate(RecipeBase):
-    ingredients: list[RecipeIngredientCreate] = []
+    ingredients: list[RecipeIngredientCreate] = []  # liste vide par défaut si absent
 
 class RecipeUpdate(RecipeBase):
     title: str | None = None
@@ -20,7 +20,7 @@ class RecipeUpdate(RecipeBase):
     prep_time: int | None = None
     cook_time: int | None = None
     servings: int | None = None
-    ingredients: list[RecipeIngredientCreate] | None = None # Optionnel — peut être absent, vaut None si absent
+    ingredients: list[RecipeIngredientCreate] | None = None # None = None envoyé → pas de mise à jour des ingrédients
 
 class RecipeRead(RecipeBase):
     id: int

@@ -1,3 +1,6 @@
+// Couche d'accès à l'API. Toutes les fonctions retournent directement response.data.
+// L'instance axios centralise la baseURL pour éviter de la répéter partout.
+
 import axios from 'axios'
 
 const api = axios.create({
@@ -29,6 +32,6 @@ export async function deleteRecipe(id) {
 }
 
 export async function getIngredients() {
-    const response = await api.get('api/v1/ingredients/')
+    const response = await api.get('/api/v1/ingredients/')
     return response.data
 }
