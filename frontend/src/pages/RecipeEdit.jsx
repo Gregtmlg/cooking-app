@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getRecipe, updateRecipe } from '../api/recipes'
+import { getRecipe, updateRecipe, getIngredients } from '../api/recipes'
 
 function RecipeEdit() {
   const { id } = useParams()
@@ -13,31 +13,46 @@ function RecipeEdit() {
     cook_time: '',
     servings: ''
   })
+  const [ingredients, setIngredients] = useState([
+    { ingredient_name: '', quantity: '', unit: '' }
+  ])
+  const [allIngredients, setAllIngredients] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    // à compléter — charger la recette et pré-remplir le form
-    async function fetchRecipe() {
-      try {
-        const data = await getRecipe(id)
-        setForm({
-          title: data.title,
-          description: data.description ?? '',
-          instructions: data.instructions,
-          prep_time: data.prep_time ?? '',
-          cook_time: data.cook_time ?? '',
-          servings: data.servings ?? ''
-        })
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
+  async function fetchData() {
+    try {
+      const [recipeData, ingredientsData] = await Promise.all([
+        getRecipe(id),
+        getIngredients()
+      ])
+      setForm({
+        title: recipeData.title,
+        description: recipeData.description ?? '',
+        instructions: recipeData.instructions,
+        prep_time: recipeData.prep_time ?? '',
+        cook_time: recipeData.cook_time ?? '',
+        servings: recipeData.servings ?? ''
+      })
+      setIngredients(
+        recipeData.ingredients && recipeData.ingredients.length > 0
+          ? recipeData.ingredients.map(ri => ({
+              ingredient_name: ri.ingredient.name,
+              quantity: ri.quantity ?? '',
+              unit: ri.unit ?? ''
+            }))
+          : [{ ingredient_name: '', quantity: '', unit: '' }]
+      )
+      setAllIngredients(ingredientsData)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
-
-    fetchRecipe()
-  }, [id])
+  }
+  fetchData()
+}, [id])
 
   function handleChange(e) {
     // identique à RecipeCreate
@@ -45,34 +60,54 @@ function RecipeEdit() {
     setForm({ ...form, [name]: value })
   }
 
+  function handleIngredientChange(index, e) {
+    const { name, value } = e.target
+    const updated = ingredients.map((ing, i) =>
+      i === index ? { ...ing, [name]: value } : ing
+    )
+    setIngredients(updated)
+  }
+
+  function handleAddIngredient() {
+    setIngredients([...ingredients, { ingredient_name: '', quantity: '', unit: '' }])
+  }
+
+  function handleRemoveIngredient(index) {
+    setIngredients(ingredients.filter((_, i) => i !== index))
+  }
+
   async function handleSubmit(e) {
-    e.preventDefault()  // empêche le rechargement de page
-    // à compléter — valider le titre, construire data, appeler updateRecipe(id, data)
-    // puis naviguer vers `/recipes/${id}`
-    if (!form.title.trim()) {
+      e.preventDefault()
+      if (!form.title.trim()) {
         setError('Votre recette doit avoir un nom.')
         return
       }
-    try {
-      const data = {
+      try {
+        const data = {
         ...form,
         prep_time: form.prep_time ? parseInt(form.prep_time) : null,
         cook_time: form.cook_time ? parseInt(form.cook_time) : null,
-        servings: form.servings ? parseInt(form.servings) : null
+        servings: form.servings ? parseInt(form.servings) : null,
+        ingredients: ingredients
+          .filter(ing => ing.ingredient_name.trim() !== '')
+          .map(ing => ({
+            ingredient_name: ing.ingredient_name.trim().toLowerCase(),
+            quantity: ing.quantity ? parseFloat(ing.quantity) : null,
+            unit: ing.unit.trim() || null
+          }))
+        }
+        await updateRecipe(id, data)
+        navigate(`/recipes/${id}`)
+      } catch (err) {
+        setError(err.message)
       }
-
-      await updateRecipe(id, data)
-      navigate(`/recipes/${id}`)
-    } catch (err) {
-      setError(err.message)
     }
-  }
 
   if (loading) return <p>Chargement...</p>
   if (error) return <p>Erreur : {error}</p>
 
   return (
-    // identique à RecipeCreate, titre "Modifier la recette"
+    // identique à RecipeCreate, titre "Modifier la recette"Pourtan
     // bouton "Enregistrer" au lieu de "Créer"
     <div>
       <h2>Modifier la recette</h2>
@@ -82,30 +117,76 @@ function RecipeEdit() {
     e.preventDefault()
   }
 }}>
+        <br />
         <div>
           <label for="title">Nom de la recette</label>
           <input name="title" value={form.title} onChange={handleChange} placeholder="Sauce Jiper" />
         </div>
+        <br />
         <div>
           <label for="description">Description</label>
           <textarea name="description" value={form.description} onChange={handleChange} placeholder="Une sauce délicieuse pour accompagner vos pâtes." />
         </div>
+        <br />
         <div>
-          <label for="prep_time">Temps de préparation (minutes)</label>
-          <input type="number" name="prep_time" value={form.prep_time} onChange={handleChange} placeholder="10" />
+        <label>Ingrédients</label>
+        <datalist id="ingredients-list">
+          {allIngredients.map(ing => (
+            <option key={ing.id} value={ing.name.charAt(0).toUpperCase() + ing.name.slice(1)} />
+          ))}
+        </datalist>
+        {ingredients.map((ing, index) => (
+          <div key={index}>
+            <input
+              list="ingredients-list"
+              name="ingredient_name"
+              value={ing.ingredient_name}
+              onChange={(e) => handleIngredientChange(index, e)}
+              placeholder="Tomate"
+            />
+            <input
+              type="number"
+              name="quantity"
+              value={ing.quantity}
+              onChange={(e) => handleIngredientChange(index, e)}
+              placeholder="200"
+            />
+            <input
+              name="unit"
+              value={ing.unit}
+              onChange={(e) => handleIngredientChange(index, e)}
+              placeholder="g"
+            />
+            <button type="button" onClick={() => handleRemoveIngredient(index)}>✕</button>
+          </div>
+          
+        ))}
         </div>
-        <div>
-          <label for="cook_time">Temps de cuisson (minutes)</label>
-          <input type="number" name="cook_time" value={form.cook_time} onChange={handleChange} placeholder="30" />
-        </div>
-        <div>
-          <label for="servings">Nombre de portions</label>
-          <input type="number" name="servings" value={form.servings} onChange={handleChange} placeholder="6" />
-        </div>
+        <button type="button" onClick={handleAddIngredient}>+ Ajouter un ingrédient</button>
+
+        <br />
+        <br />
         <div>
           <label for="instructions">Instructions</label>
           <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Mélanger les ingrédients... Pétrir la pâte..." />
         </div>
+        <br />
+        <div>
+          <label for="prep_time">Temps de préparation (minutes)</label>
+          <input type="number" name="prep_time" value={form.prep_time} onChange={handleChange} placeholder="10" />
+        </div>
+        <br />
+        <div>
+          <label for="cook_time">Temps de cuisson (minutes)</label>
+          <input type="number" name="cook_time" value={form.cook_time} onChange={handleChange} placeholder="30" />
+        </div>
+        <br />
+        <div>
+          <label for="servings">Nombre de portions</label>
+          <input type="number" name="servings" value={form.servings} onChange={handleChange} placeholder="6" />
+        </div>
+
+        <br />
           <button type="submit">Enregistrer la recette</button>
       </form>
     </div>

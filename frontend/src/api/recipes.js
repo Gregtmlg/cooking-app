@@ -27,3 +27,8 @@ export async function updateRecipe(id, data) {
 export async function deleteRecipe(id) {
     const response = await api.delete(`/api/v1/recipes/${id}/`)
 }
+
+export async function getIngredients() {
+    const response = await api.get('api/v1/ingredients/')
+    return response.data
+}
