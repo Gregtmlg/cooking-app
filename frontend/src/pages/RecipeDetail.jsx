@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, deleteRecipe } from '../api/recipes'
 
+function capitalize(str) {
+  if (!str) return ''
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
 function RecipeDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -56,11 +61,38 @@ function RecipeDetail() {
       </div>
       <div>
         <h2>{recipe.title}</h2>
+        <br />
         <p>{recipe.description}</p>
+        <br />
         <p>Temps de préparation : {recipe.prep_time} minutes</p>
+        <br />
         <p>Temps de cuisson : {recipe.cook_time} minutes</p>
+        <br />
         <p>Nombre de portions : {recipe.servings}</p>
+        <br />
+        <h3>Ingrédients :</h3>
+        {recipe.ingredients.length === 0 ? (
+          <p>Aucun ingrédient n'a été listé.</p>
+        ) : (
+          <ul>
+            {recipe.ingredients.map((ing, index) => {
+              const name = capitalize(ing.ingredient.name)
+              return (
+              <li key={index}>
+                <p>{ing.quantity === null
+                  ? name
+                  : ing.unit === null
+                  ? `${ing.quantity} ${name}`
+                  : `${ing.quantity} ${ing.unit} de ${name}`
+                  }</p>
+              </li>
+            )})}
+          </ul>
+        )}
+        <br />
+        <h3>Instructions :</h3>
         <p>{recipe.instructions}</p>
+        <br />
         <Link to={`/recipes/${id}/edit`}>Modifier</Link>
         <button onClick={handleDelete}>Supprimer</button>
       </div>
