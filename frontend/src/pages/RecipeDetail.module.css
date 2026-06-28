@@ -1,84 +1,84 @@
 .backLink {
-    color: var(--color-accent);
-    font-size: 0.9rem;
-    display: inline-block;
-    margin-bottom: 1.5rem;
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  display: inline-block;
+  margin-bottom: 1.5rem;
 }
 
 .card {
-    background-color: #fff;
-    border: 0.5px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    padding: 2rem;
+  background-color: #fff;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
 }
 
 .title {
-    font-size: 2rem;
-    color: var(--color-dark);
-    margin-bottom: 0.5rem;
+  font-size: 2rem;
+  color: var(--color-dark);
+  margin-bottom: 0.5rem;
 }
 
 .description {
-    color: var(--color-text-muted);
-    margin-bottom: 1.5rem;
+  color: var(--color-text-muted);
+  margin-bottom: 1.5rem;
 }
 
 .meta {
-    display: flex;
-    gap: 1.5rem;
-    font-size: 0.9rem;
-    color: var(--color-text);
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  margin-bottom: 2rem;
 }
 
 .sectionTitle {
-    font-family: var(--font-serif);
-    font-size: 1.3rem;
-    color: var(--color-dark);
-    margin: 1.5rem 0 1rem;
+  font-family: var(--font-serif);
+  font-size: 1.3rem;
+  color: var(--color-dark);
+  margin: 1.5rem 0 1rem;
 }
 
 .ingredientGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.5rem;
-    list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.5rem;
+  list-style: none;
 }
 
 .ingredientItem {
-    background-color: var(--color-background);
-    border: 0.5px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
+  background-color: var(--color-background);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
 }
 
 .instructions {
-    line-height: 1.7;
-    white-space: pre-wrap;
+  line-height: 1.7;
+  white-space: pre-wrap;
 }
 
 .actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
 }
 
 .editButton {
-    background-color: var(--color-accent);
-    color: var(--color-light);
-    padding: 0.6rem 1.2rem;
-    border-radius: var(--radiu-md);
-    border: none;
-    cursor: pointer;
+  background-color: var(--color-accent);
+  color: var(--color-light);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
 }
 
 .deleteButton {
-    background-color: transparent;
-    color: var(--color-accent);
-    border: 0.5px solid var(--coolor-accent);
-    padding: 0.6rem 1.2rem;
-    border-radius: var(--radius-md);
-    cursor: pointer;
+  background-color: transparent;
+  color: var(--color-accent);
+  border: 0.5px solid var(--color-accent);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
 }

@@ -49,7 +49,7 @@ function RecipeDetail() {
 
   return (
     <div>
-      <Link to="/" className={styles.backLink}>Retour à la liste</Link>
+      <Link to="/" className={styles.backLink}>← Retour à la liste</Link>
       <div className={styles.card}>
         <h2 className={styles.title}>{recipe.title}</h2>
         <p className={styles.description}>{recipe.description}</p>
@@ -59,34 +59,34 @@ function RecipeDetail() {
           {recipe.cook_time && <span>Cuisson : {recipe.cook_time} min</span>}
           {recipe.servings && <span>{recipe.servings} personnes</span>}
         </div>
-        
-          <h3 className={styles.sectionTitle}>Ingrédients</h3>
-          {recipe.ingredients.length === 0 ? (
-            <p>Aucun ingrédient n'a été listé.</p>
-          ) : (
-            <ul className={styles.ingredientGrid}>
-              {recipe.ingredients.map((ing, index) => {
-                const name = capitalize(ing.ingredient.name)
-                return (
-                <li className={styles.ingredientItem} key={index}>
+
+        <h3 className={styles.sectionTitle}>Ingrédients</h3>
+        {recipe.ingredients.length === 0 ? (
+          <p>Aucun ingrédient n'a été listé.</p>
+        ) : (
+          <ul className={styles.ingredientGrid}>
+            {recipe.ingredients.map((ing, index) => {
+              const name = capitalize(ing.ingredient.name)
+              return (
+                <li key={index} className={styles.ingredientItem}>
                   {ing.quantity === null
                     ? name
                     : ing.unit === null
                     ? `${ing.quantity} ${name}`
-                    : `${ing.quantity} ${ing.unit} de ${name}`
-                  }
+                    : `${ing.quantity} ${ing.unit} de ${name}`}
                 </li>
-              )})}
-            </ul>
-          )}
+              )
+            })}
+          </ul>
+        )}
 
-          <h3 className={styles.sectionTitle}>Instructions :</h3>
-          <p className={styles.instructions}>{recipe.instructions}</p>
+        <h3 className={styles.sectionTitle}>Instructions</h3>
+        <p className={styles.instructions}>{recipe.instructions}</p>
 
-          <div className={styles.actions}>
-            <Link to={`/recipes/${id}/edit`} className={styles.editButton}>Modifier</Link>
-            <button onClick={handleDelete} className={styles.deleteButton}>Supprimer</button>
-          </div>
+        <div className={styles.actions}>
+          <Link to={`/recipes/${id}/edit`} className={styles.editButton}>Modifier</Link>
+          <button onClick={handleDelete} className={styles.deleteButton}>Supprimer</button>
+        </div>
       </div>
     </div>
   )
