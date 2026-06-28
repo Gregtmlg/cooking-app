@@ -107,7 +107,7 @@ function RecipeCreate() {
         <datalist id="ingredients-list">
           {allIngredients.map(ing => (
             <option key={ing.id} value={ing.name.charAt(0).toUpperCase() + ing.name.slice(1)} />
-          )).slice(0,10)}
+          ))}
         </datalist>
         {ingredients.map((ing, index) => (
           <div key={index}>
