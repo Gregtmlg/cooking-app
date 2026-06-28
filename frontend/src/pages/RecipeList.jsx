@@ -27,7 +27,7 @@ function RecipeList() {
 
   return (
     <div>
-      <h2>Recettes</h2>
+      <h2>Recettes 🍳</h2>
       {recipes.length === 0 ? (
         <p>Aucune recette pour le moment.</p>
       ) : (
