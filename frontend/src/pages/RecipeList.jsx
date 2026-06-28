@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getRecipes } from '../api/recipes'
 import { Link } from 'react-router-dom'
+import styles from './RecipeList.module.css'
 
 function RecipeList() {
   const [recipes, setRecipes] = useState([])
@@ -27,17 +28,23 @@ function RecipeList() {
 
   return (
     <div>
-      <h2>Recettes</h2>
+      <h2 className={styles.title}>Recettes</h2>
       {recipes.length === 0 ? (
         <p>Aucune recette pour le moment.</p>
       ) : (
-        <ul>
+        <div className={styles.grid}>
           {recipes.map((recipe) => (
-            <li key={recipe.id}>
-              <Link to={`/recipes/${recipe.id}`}>{recipe.title}</Link>
-            </li>
+            <Link to={`/recipes/${recipe.id}`} className={styles.card} key={recipe.id}>
+              <div className={styles.cardImage}></div>
+              <h3 className={styles.cardTitle}>{recipe.title}</h3>
+              <p className={styles.cardMeta}>
+                {recipe.prep_time && <span>{recipe.prep_time} min</span>}
+                {recipe.prep_time && recipe.servings && <span>·</span>}
+                {recipe.servings && <span>{recipe.servings} pers.</span>}
+              </p>
+              </Link>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   )
