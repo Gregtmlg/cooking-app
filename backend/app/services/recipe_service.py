@@ -72,6 +72,7 @@ def delete_recipe(db: Session, recipe_id: int) -> Recipe | None:
     if not db_recipe:
         return None
 
+    db.query(RecipeIngredient).filter(RecipeIngredient.recipe_id == recipe_id).delete()
     db.delete(db_recipe)
     db.commit()
     return db_recipe
