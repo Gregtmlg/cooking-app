@@ -13,4 +13,4 @@ services:
       - "80:80"
     depends_on:
       - backend
-    restart: on-failure
+    restart: unless-stopped
