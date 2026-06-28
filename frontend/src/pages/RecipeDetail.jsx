@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { getRecipe, deleteRecipe } from '../api/recipes'
-import style from './RecipeDetail.module.css'
+import styles from './RecipeDetail.module.css'
 
 // Capitalise la première lettre d'un nom d'ingrédient pour l'affichage.
 // Les noms sont stockés en minuscules en base (normalisés à la création).
