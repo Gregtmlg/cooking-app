@@ -1,0 +1,36 @@
+.header {
+    background-color: var(--color-dark);
+    padding: 1rem 2rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    color: var(--color-light);
+}
+
+.nav {
+    display: flex;
+    flex-direction: row;
+    gap: 1.5rem;
+}
+
+.navLink {
+    color:  #C4957A;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+.navLink:hover {
+    color: var(--color-light);
+}
+
+.main {
+    padding: 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+}

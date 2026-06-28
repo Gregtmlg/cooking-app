@@ -1,16 +1,19 @@
 import { Link } from 'react-router-dom'
+import styles from './Layout.module.css'
 
 function Layout({ children }) {
     return (
         <div>
-            <header>
-                <h1><Link to="/">Cooking App</Link></h1>
-                <nav>
-                    <Link to="/">Recettes</Link>
-                    <Link to="/recipes/new">Créer une recette</Link>
+            <header className={styles.header}>
+                <h1 className= {styles.logo}>
+                    <Link to="/">Cooking App</Link>
+                </h1>
+                <nav className={styles.nav}>
+                    <Link className={styles.navLink} to="/">Recettes</Link>
+                    <Link className={styles.navLink} to="/recipes/new">Créer une recette</Link>
                 </nav>
             </header>
-            <main>
+            <main className={styles.main}>
                 {children}
             </main>
         </div>
