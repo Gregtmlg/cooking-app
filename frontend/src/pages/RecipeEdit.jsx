@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { getRecipe, updateRecipe, getIngredients } from '../api/recipes'
+import styles from './RecipeForm.module.css'
 
 function RecipeEdit() {
   const { id } = useParams()
@@ -117,25 +118,25 @@ function RecipeEdit() {
 
   return (
     <div>
-      <h2>Modifier la recette</h2>
-      {error && <p>Erreur : {error}</p>}
-      <form onSubmit={handleSubmit} onKeyDown={(e) => {
-  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
-    e.preventDefault()
-  }
-}}>
-        <br />
-        <div>
-          <label htmlFor="title">Nom de la recette</label>
+      <h2 className={styles.title}>Modifier la recette</h2>
+      {error && <p className={styles.error}>Erreur : {error}</p>}
+      <form
+      className={styles.form} 
+      onSubmit={handleSubmit} 
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {e.preventDefault()}
+      }}>
+        <div className={styles.field}>
+          <label>Nom de la recette</label>
           <input name="title" value={form.title} onChange={handleChange} placeholder="Sauce Jiper" />
         </div>
-        <br />
-        <div>
+
+        <div className={styles.field}>
           <label htmlFor="description">Description</label>
           <textarea name="description" value={form.description} onChange={handleChange} placeholder="Une sauce délicieuse pour accompagner vos pâtes." />
         </div>
-        <br />
-        <div>
+
+        <div className={styles.field}>
         <label>Ingrédients</label>
         <datalist id="ingredients-list">
           {allIngredients.map(ing => (
@@ -143,8 +144,9 @@ function RecipeEdit() {
           ))}
         </datalist>
         {ingredients.map((ing, index) => (
-          <div key={index}>
+          <div key={index} className={styles.ingredientRow}>
             <input
+              className={styles.ingredientName}
               list="ingredients-list"
               name="ingredient_name"
               value={ing.ingredient_name}
@@ -152,6 +154,7 @@ function RecipeEdit() {
               placeholder="Tomate"
             />
             <input
+              className={styles.ingredientQuantity}
               type="number"
               name="quantity"
               value={ing.quantity}
@@ -159,42 +162,52 @@ function RecipeEdit() {
               placeholder="200"
             />
             <input
+              className={styles.ingredientUnit}
               name="unit"
               value={ing.unit}
               onChange={(e) => handleIngredientChange(index, e)}
               placeholder="g"
             />
-            <button type="button" onClick={() => handleRemoveIngredient(index)}>✕</button>
+            <button
+              type="button"
+              className={styles.removeButton}
+              onClick={() => handleRemoveIngredient(index)}
+              aria-label="Supprimer l'ingrédient"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+            </button>
           </div>
-          
         ))}
+        <button type="button" className={styles.addButton} onClick={handleAddIngredient}>
+          + Ajouter un ingrédient
+        </button>
         </div>
-        <button type="button" onClick={handleAddIngredient}>+ Ajouter un ingrédient</button>
-
-        <br />
-        <br />
-        <div>
-          <label htmlFor="instructions">Instructions</label>
-          <textarea name="instructions" value={form.instructions} onChange={handleChange} placeholder="Mélanger les ingrédients... Pétrir la pâte..." />
-        </div>
-        <br />
-        <div>
-          <label htmlFor="prep_time">Temps de préparation (minutes)</label>
-          <input type="number" name="prep_time" value={form.prep_time} onChange={handleChange} placeholder="10" />
-        </div>
-        <br />
-        <div>
-          <label htmlFor="cook_time">Temps de cuisson (minutes)</label>
-          <input type="number" name="cook_time" value={form.cook_time} onChange={handleChange} placeholder="30" />
-        </div>
-        <br />
-        <div>
-          <label htmlFor="servings">Nombre de portions</label>
-          <input type="number" name="servings" value={form.servings} onChange={handleChange} placeholder="6" />
+        <div className={styles.field}>
+          <label>Instructions</label>
+          <textarea name="instructions" value={form.instructions} onChange={handleChange} />
         </div>
 
-        <br />
-          <button type="submit">Enregistrer la recette</button>
+        <div className={styles.field}>
+          <label>Temps de préparation (min)</label>
+          <input type="number" name="prep_time" value={form.prep_time} onChange={handleChange} />
+        </div>
+
+        <div className={styles.field}>
+          <label>Temps de cuisson (min)</label>
+          <input type="number" name="cook_time" value={form.cook_time} onChange={handleChange} />
+        </div>
+
+        <div className={styles.field}>
+          <label>Portions</label>
+          <input type="number" name="servings" value={form.servings} onChange={handleChange} />
+        </div>
+
+        <button type="submit" className={styles.submitButton}>Enregistrer la recette</button>
       </form>
     </div>
   )
