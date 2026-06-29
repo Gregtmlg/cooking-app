@@ -13,7 +13,7 @@ export async function getRecipes() {
 }
 
 export async function getRecipe(id) {
-    const response = await api.get(`/api/v1/recipes/${id}/`)
+    const response = await api.get(`/api/v1/recipes/${id}`)
     return response.data
 }
 
@@ -23,12 +23,12 @@ export async function createRecipe(data) {
 }
 
 export async function updateRecipe(id, data) {
-    const response = await api.patch(`/api/v1/recipes/${id}/`, data)
+    const response = await api.patch(`/api/v1/recipes/${id}`, data)
     return response.data
 }
 
 export async function deleteRecipe(id) {
-    const response = await api.delete(`/api/v1/recipes/${id}/`)
+    const response = await api.delete(`/api/v1/recipes/${id}`)
 }
 
 export async function getIngredients() {
