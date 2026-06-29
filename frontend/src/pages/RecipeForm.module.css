@@ -1,0 +1,67 @@
+.title {
+  font-size: 2rem;
+  color: var(--color-dark);
+  margin-bottom: 1.5rem;
+}
+
+.form {
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ingredientRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.ingredientName { flex: 3; min-width: 0; }
+.ingredientQuantity { flex: 1; min-width: 0; }
+.ingredientUnit { flex: 1; min-width: 0; }
+
+.removeButton {
+  background-color: transparent;
+  color: var(--color-accent);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: auto;
+}
+
+.addButton {
+  background-color: transparent;
+  color: var(--color-accent);
+  border: 0.5px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  width: auto;
+  margin-top: 0.5rem;
+}
+
+.submitButton {
+  background-color: var(--color-accent);
+  color: var(--color-light);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  width: auto;
+  font-size: 1rem;
+}
+
+.error {
+  color: var(--color-accent);
+  margin-bottom: 1rem;
+}
