@@ -39,7 +39,7 @@ function RecipeList() {
               <h3 className={styles.cardTitle}>{recipe.title}</h3>
               <p className={styles.cardMeta}>
                 {recipe.prep_time && <span>{recipe.prep_time} min</span>}
-                {recipe.prep_time && recipe.servings && <span>·</span>}
+                {recipe.prep_time && recipe.servings && <span> · </span>}
                 {recipe.servings && <span>{recipe.servings} pers.</span>}
               </p>
               </Link>
