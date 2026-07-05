@@ -9,7 +9,11 @@ while true; do
     cd "$REPO_DIR"
 
     # Récupère les infos du dépôt distant sans modifier le code local
-    git fetch origin master --quiet
+    if ! git fetch origin master --quiet; then
+        echo "==> [$(date)] Échec de la récupération des informations du dépôt distant.">&2
+        sleep "$CHECK_INTERVAL"
+        continue
+    fi
 
     LOCAL=$(git rev-parse HEAD)
     REMOTE=$(git rev-parse origin/master)
