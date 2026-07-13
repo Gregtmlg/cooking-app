@@ -12,11 +12,13 @@ def get_recipe(
     return db.query(Recipe).filter(Recipe.id == recipe_id).first()
 
 
-def get_recipes(
-    db: Session, skip: int = 0, limit: int = 100
-) -> list[
-    Recipe
-]:  # Récupère toutes les recettes avec pagination. Les paramètres skip et limit permettent de contrôler le nombre de recettes retournées et à partir de quel index commencer la récupération. Par défaut, il retourne les 100 premières recettes.
+def get_recipes(db: Session, skip: int = 0, limit: int = 100) -> list[Recipe]:
+    """
+    Récupère toutes les recettes avec pagination.
+    Les paramètres skip et limit permettent de contrôler le nombre de recettes
+    retournées et à partir de quel index commencer la récupération.
+    Par défaut, il retourne les 100 premières recettes.
+    """
     return db.query(Recipe).offset(skip).limit(limit).all()
 
 
@@ -30,7 +32,11 @@ def create_recipe(db: Session, recipe_in: RecipeCreate) -> Recipe:
         servings=recipe_in.servings,
     )
     db.add(db_recipe)
-    db.flush()  # .flush() permet de générer l'ID du nouvel objet Recipe avant de l'utiliser pour créer les relations avec les ingrédients. Cela garantit que l'ID est disponible pour les relations, même si la transaction n'est pas encore validée (commit).
+    db.flush()
+    # .flush() permet de générer l'ID du nouvel objet Recipe
+    # avant de l'utiliser pour créer les relations avec les ingrédients.
+    # Cela garantit que l'ID est disponible pour les relations,
+    # même si la transaction n'est pas encore validée (commit).
     # Création des associations recette-ingrédient.
     # get_or_create_ingredient évite les doublons : si l'ingrédient existe déjà en base
     # (même nom normalisé en minuscules), il est réutilisé ; sinon il est créé.
@@ -53,9 +59,12 @@ def update_recipe(db: Session, recipe_id: int, recipe_in: RecipeUpdate) -> Recip
     if not db_recipe:
         return None
 
-    for field, value in recipe_in.model_dump(
-        exclude_unset=True
-    ).items():  # .model_dump(exclude_unset=True) permet de ne récupérer que les champs qui ont été modifiés dans l'objet RecipeUpdate, en excluant ceux qui n'ont pas été définis (unset). Cela permet d'éviter de réécrire des valeurs par défaut ou nulles pour les champs non modifiés.
+    for field, value in recipe_in.model_dump(exclude_unset=True).items():
+        # .model_dump(exclude_unset=True) permet de ne récupérer
+        # que les champs qui ont été modifiés dans l'objet RecipeUpdate,
+        # en excluant ceux qui n'ont pas été définis (unset).
+        # Cela permet d'éviter de réécrire des valeurs
+        # par défaut ou nulles pour les champs non modifiés.
         # Stratégie "replace" : on supprime tous les ingrédients existants de la recette
         # et on recrée ceux envoyés par le formulaire. Plus simple qu'un diff ligne par ligne.
         if field == "ingredients":
@@ -72,9 +81,10 @@ def update_recipe(db: Session, recipe_id: int, recipe_in: RecipeUpdate) -> Recip
                 )
                 db.add(db_recipe_ingredient)
         else:
-            setattr(
-                db_recipe, field, value
-            )  # setattr(db_recipe, field, value) permet de mettre à jour dynamiquement les attributs de l'objet db_recipe avec les nouvelles valeurs fournies dans recipe_in. Cela évite d'avoir à écrire manuellement chaque champ à mettre à jour.
+            setattr(db_recipe, field, value)
+            # setattr(db_recipe, field, value) permet de mettre à jour dynamiquement
+            # les attributs de l'objet db_recipe avec les nouvelles valeurs fournies dans recipe_in.
+            # Cela évite d'avoir à écrire manuellement chaque champ à mettre à jour.
 
     db.commit()
     db.refresh(db_recipe)
