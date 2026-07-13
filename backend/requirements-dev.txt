@@ -1,0 +1,10 @@
+# Dépendances de développement et d'intégration continue.
+# Jamais installées dans l'image Docker de production.
+-r requirements.txt
+
+# Test 
+httpx==0.28.1
+pytest==9.1.1
+
+# Lint & format
+ruff==0.15.18
