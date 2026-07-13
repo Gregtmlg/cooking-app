@@ -1,0 +1,22 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+# Fichiers générés par Alembic : leur forme n'est pas de notre ressort.
+exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle — erreurs
+    "W",   # pycodestyle — avertissements
+    "F",   # Pyflakes — les vraies erreurs (imports morts, noms non définis)
+    "I",   # isort — tri des imports
+    "B",   # bugbear — pièges classiques
+    "UP",  # pyupgrade — syntaxe moderne
+]
+
+[tool.ruff.lint.per-file-ignores]
+# `import app.models` est un import à effet de bord : il peuple Base.metadata.
+# Sans lui, `alembic revision --autogenerate` produirait des migrations vides.
+# Il EST utilisé — mais pas d'une façon que Pyflakes sait voir.
+"alembic/env.py" = ["F401"]
