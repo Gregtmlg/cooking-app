@@ -1,14 +1,11 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
+import app.models
 from alembic import context
-
 from app.core.config import settings
 from app.db.base import Base
-import app.models
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -62,16 +59,14 @@ def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
-    On importe directement notre engine SQLAlchemy 
+    On importe directement notre engine SQLAlchemy
     déjà configuré avec la bonne URL
 
     """
     from app.db.session import engine
 
     with engine.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

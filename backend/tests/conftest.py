@@ -21,9 +21,7 @@ def client():
     connection = engine_test.connect()
     Base.metadata.create_all(bind=connection)
 
-    TestingSessionLocal = sessionmaker(
-        autocommit=False, autoflush=False, bind=connection
-    )
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
     session = TestingSessionLocal()
 
     def override_get_db():

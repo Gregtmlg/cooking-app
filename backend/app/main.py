@@ -1,9 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import recipes as recipes_router
 from app.api.v1 import ingredients as ingredients_router
-
+from app.api.v1 import recipes as recipes_router
 from app.core.config import settings
 
 app = FastAPI(
@@ -14,11 +13,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"], # port par défaut de Vite
+    allow_origins=["http://localhost:5173"],  # port par défaut de Vite
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.get("/health")
 def health_check():

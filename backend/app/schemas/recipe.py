@@ -1,6 +1,9 @@
-from pydantic import BaseModel
-from app.schemas.recipe_ingredient import RecipeIngredientRead, RecipeIngredientCreate
 from datetime import datetime
+
+from pydantic import BaseModel
+
+from app.schemas.recipe_ingredient import RecipeIngredientCreate, RecipeIngredientRead
+
 
 class RecipeBase(BaseModel):
     title: str
@@ -10,22 +13,29 @@ class RecipeBase(BaseModel):
     cook_time: int | None = None
     servings: int | None = None
 
+
 class RecipeCreate(RecipeBase):
     ingredients: list[RecipeIngredientCreate] = []  # liste vide par défaut si absent
+
 
 class RecipeUpdate(RecipeBase):
     title: str | None = None
     description: str | None = None
-    instructions: str |None = None
+    instructions: str | None = None
     prep_time: int | None = None
     cook_time: int | None = None
     servings: int | None = None
-    ingredients: list[RecipeIngredientCreate] | None = None # None = None envoyé → pas de mise à jour des ingrédients
+    ingredients: list[RecipeIngredientCreate] | None = (
+        None  # None = None envoyé → pas de mise à jour des ingrédients
+    )
+
 
 class RecipeRead(RecipeBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    ingredients: list[RecipeIngredientRead] | None  # Obligatoire — doit être fourni, peut valoir None
-    
+    ingredients: (
+        list[RecipeIngredientRead] | None
+    )  # Obligatoire — doit être fourni, peut valoir None
+
     model_config = {"from_attributes": True}
