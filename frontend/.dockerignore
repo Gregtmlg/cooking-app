@@ -1,0 +1,12 @@
+# Recompilé par `npm ci` dans le builder. Présent ici, il alourdit
+# le contexte de plusieurs centaines de Mo et peut écraser l'install
+# avec des binaires natifs compilés pour la mauvaise plateforme.
+node_modules/
+
+# Sortie de build locale. C'est `npm run build` DANS l'image qui doit
+# la produire, pas un vestige de ta machine.
+dist/
+
+# Vite inline les variables VITE_* directement dans le bundle JS servi
+# au navigateur. Aucun fichier .env n'entre dans un contexte de build.
+.env*

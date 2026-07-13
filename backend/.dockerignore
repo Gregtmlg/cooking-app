@@ -1,0 +1,17 @@
+# LISTE BLANCHE : tout est exclu par défaut, on ré-inclut explicitement.
+# Un fichier sensible ajouté demain ne peut PAS entrer par accident.
+*
+
+# Le code de l'application
+!app/
+
+# Les migrations (start.sh lance `alembic upgrade head`)
+!alembic/
+!alembic.ini
+
+# Le point d'entrée du conteneur
+!start.sh
+
+# Les dépendances runtime (copiées par une ligne dédiée du Dockerfile,
+# mais elles doivent tout de même être présentes dans le contexte)
+!requirements.txt
