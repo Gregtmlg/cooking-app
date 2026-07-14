@@ -1,0 +1,14 @@
+[Unit]
+Description=Vérifie toutes les 2 minutes si une nouvelle image cooking-app est publiée
+
+[Timer]
+# Premier tick 2 min après le démarrage de la machine.
+OnBootSec=2min
+# Puis toutes les 2 min, comptées depuis la FIN du run précédent
+# (pas de chevauchement possible si un pull traîne).
+OnUnitActiveSec=2min
+# Nom du service à déclencher. Implicite ici (même nom de base), mais explicite = mieux.
+Unit=cooking-deploy.service
+
+[Install]
+WantedBy=timers.target

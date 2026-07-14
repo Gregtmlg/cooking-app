@@ -1,13 +1,17 @@
 services:
   backend:
-    build: ./backend
+    # ${TAG:-main} : vaut "main" par défaut. Le rollback se fait par
+    #   TAG=sha-eac1bda docker compose up -d
+    # sans jamais modifier ce fichier sur le serveur (principe 7).
+    image: ghcr.io/gregtmlg/cooking-app-backend:${TAG:-main}
     volumes:
       - /srv/data/cooking:/app/data
     env_file:
-      - ./backend/.env
+      - ./backend.env
     restart: unless-stopped
+
   frontend:
-    build: ./frontend
+    image: ghcr.io/gregtmlg/cooking-app-frontend:${TAG:-main}
     ports:
       - "80:80"
     depends_on:
