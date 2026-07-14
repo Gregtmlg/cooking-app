@@ -1,0 +1,12 @@
+[Unit]
+Description=Déploiement cooking-app (tire les images validées par la CI)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/apps/cooking
+ExecStart=/srv/apps/cooking/deploy.sh
+
+# Pas de section [Install] : ce service n'est jamais activé directement.
+# Il est invoqué par cooking-deploy.timer.
