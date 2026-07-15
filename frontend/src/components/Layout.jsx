@@ -6,7 +6,7 @@ function Layout({ children }) {
         <div>
             <header className={styles.header}>
                 <h1 className= {styles.logo}>
-                    <Link to="/">Cooking App</Link>
+                    <Link to="/">Dingé Kitchen</Link>
                 </h1>
                 <nav className={styles.nav}>
                     <Link className={styles.navLink} to="/">Recettes</Link>
