@@ -7,6 +7,7 @@ import app.models  # noqa: F401
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app as fastapi_app
+from app.models.group import Group
 
 SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 
@@ -39,3 +40,26 @@ def client():
     session.close()
     Base.metadata.drop_all(bind=connection)
     connection.close()
+
+
+@pytest.fixture(scope="function")
+def db_session():
+    connection = engine_test.connect()
+    Base.metadata.create_all(bind=connection)
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+        Base.metadata.drop_all(bind=connection)
+        connection.close()
+
+
+@pytest.fixture
+def amis_group(db_session):
+
+    group = Group(slug="amis", name="Amis")
+    db_session.add(group)
+    db_session.commit()
+    return group
