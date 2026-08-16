@@ -1,0 +1,64 @@
+.hub {
+  position: relative;          /* ancre la future couche SVG (absolute) à ce conteneur */
+  min-height: 100dvh;          /* pleine hauteur ; dvh gère l'apparition des barres mobiles */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-background);
+  overflow: hidden;            /* le croquis qui débordera sera rogné proprement */
+}
+
+.content {
+  position: relative;
+  z-index: 1;                  /* passe AU-DESSUS de la future couche de fond (z-index: 0) */
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.brand {
+  font-family: var(--font-serif);
+  font-size: clamp(2.5rem, 6vw, 4rem);   /* s'adapte à la largeur, bornes basse/haute */
+  color: var(--color-dark);
+  margin-bottom: var(--space-2xl);
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  align-items: center;
+}
+
+.item {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.itemLink {
+  color: var(--color-accent);
+}
+
+.itemLink:hover {
+  color: var(--color-dark);
+  transform: translateY(-2px);
+}
+
+.itemDisabled {
+  color: var(--color-text-muted);
+  cursor: default;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+}
+
+.soon {
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.4rem;
+}
