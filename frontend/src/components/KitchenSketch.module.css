@@ -1,0 +1,30 @@
+.sketch {
+  position: absolute;
+  inset: 0;                 /* remplit le .hub (relative + overflow:hidden déjà posés) */
+  z-index: 0;               /* DERRIÈRE le .content (z-index: 1) */
+  width: 100%;
+  height: 100%;
+  pointer-events: none;     /* décoratif : ne capte aucun clic destiné au menu */
+}
+
+.sketch :is(path, line, polyline, polygon, circle, ellipse, rect) {
+  fill: none;
+  stroke: var(--color-mid);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;          /* défaut : tracé plein (état reduced-motion) */
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sketch :is(path, line, polyline, polygon, circle, ellipse, rect) {
+    animation: draw 5s ease both;
+  }
+}
+
+@keyframes draw {
+  from { stroke-dashoffset: 1; }   /* état initial : tracé VIDE(état animé) */
+  to { stroke-dashoffset: 0; }   /* état final : tracé PLEIN(état animé) */
+}
+

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import KitchenSketch from '../components/KitchenSketch.jsx'
 import styles from './HomePage.module.css'
 
 const navItems = [
@@ -11,6 +12,7 @@ const navItems = [
 function HomePage() {
   return (
     <div className={styles.hub}>
+        <KitchenSketch />
         <div className={styles.content}>
             <h1 className={styles.brand}>Dingé Kitchen</h1>
             <nav className={styles.menu}>
@@ -37,6 +39,8 @@ function HomePage() {
             </nav>
         </div>
     </div>
+
+    
   )
 }
 
