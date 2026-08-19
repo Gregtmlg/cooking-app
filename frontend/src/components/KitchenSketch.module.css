@@ -19,7 +19,7 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .sketch :is(path, line, polyline, polygon, circle, ellipse, rect) {
-    animation: draw 5s ease both;
+    animation: draw 30s ease both;
   }
 }
 
