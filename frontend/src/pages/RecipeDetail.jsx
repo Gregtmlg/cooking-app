@@ -40,7 +40,7 @@ function RecipeDetail() {
     if (confirmed) {
       try {
         await deleteRecipe(id)
-        navigate('/')
+        navigate('/recipes')
       } catch (err) {
         setError(err.message)
       }
@@ -49,7 +49,7 @@ function RecipeDetail() {
 
   return (
     <div>
-      <Link to="/" className={styles.backLink}>← Retour à la liste</Link>
+      <Link to="/recipes" className={styles.backLink}>← Retour à la liste</Link>
       <div className={styles.card}>
         <h2 className={styles.title}>{recipe.title}</h2>
         <p className={styles.description}>{recipe.description}</p>

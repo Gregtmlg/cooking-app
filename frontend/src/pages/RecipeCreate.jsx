@@ -79,7 +79,7 @@ function RecipeCreate() {
           }))
       }
       await createRecipe(data)
-      navigate('/')
+      navigate('/recipes')
     } catch (err) {
       setError(err.message)
     }
