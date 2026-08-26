@@ -8,6 +8,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.profile import Profile
+    from app.models.session import AuthSession
 
 
 class Account(Base):
@@ -21,4 +22,7 @@ class Account(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     profiles: Mapped[list["Profile"]] = relationship(
         "Profile", back_populates="account", cascade="all, delete-orphan"
+    )
+    sessions: Mapped[list["AuthSession"]] = relationship(
+        "AuthSession", back_populates="account", cascade="all, delete-orphan"
     )

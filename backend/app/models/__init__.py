@@ -5,11 +5,13 @@ from app.models.profile import Profile
 from app.models.profile_group import profile_groups
 from app.models.recipe import Recipe
 from app.models.recipe_ingredient import RecipeIngredient
+from app.models.session import AuthSession
 
 __all__ = [
     "Recipe",
     "Ingredient",
     "RecipeIngredient",
+    "AuthSession",
     "Account",
     "Profile",
     "Group",
