@@ -1,13 +1,13 @@
-from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 
-from app.api.deps import DbSession
+from app.api.deps import SESSION_COOKIE_NAME, CurrentAccount, DbSession
 from app.core.config import settings
+from app.core.rate_limit import rate_limit_login
 from app.schemas.auth import AccountRead, LoginRequest
 from app.services import account_service, session_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-SESSION_COOKIE_NAME = "cooking_session"
 SESSION_MAX_AGE = 14 * 24 * 60 * 60  # 14 jours, en secondes — aligné sur SESSION_LIFETIME
 
 
@@ -23,7 +23,7 @@ def _set_session_cookie(response: Response, token: str) -> None:
     )
 
 
-@router.post("/login", response_model=AccountRead)
+@router.post("/login", response_model=AccountRead, dependencies=[Depends(rate_limit_login)])
 def login(credentials: LoginRequest, db: DbSession, response: Response):
     account = account_service.authenticate(db, credentials.username, credentials.password)
     if account is None:
@@ -49,13 +49,5 @@ def logout(
 
 
 @router.get("/me", response_model=AccountRead)
-def me(
-    db: DbSession,
-    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
-):
-    if session_token is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Non authentifié.")
-    auth_session = session_service.validate_session(db, session_token)
-    if auth_session is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session invalide.")
-    return auth_session.account
+def me(account: CurrentAccount):
+    return account

@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401
+from app.core import rate_limit
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
@@ -64,3 +65,10 @@ def account(db_session, amis_group):
         db_session, username="Louise", password="motdepasse123", group_slug="amis"
     )
     return account
+
+
+@pytest.fixture(autouse=True)
+def reset_rate_limiter():
+    rate_limit._attempts.clear()
+    yield
+    rate_limit._attempts.clear()
