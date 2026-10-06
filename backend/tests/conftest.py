@@ -4,11 +4,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app as fastapi_app
 from app.models.group import Group
-from app.core.config import settings
 
 SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 
