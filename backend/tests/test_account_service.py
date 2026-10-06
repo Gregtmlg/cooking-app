@@ -6,6 +6,7 @@ from app.services.account_service import (
     GroupNotFound,
     InvalidPassword,
     UsernameAlreadyExists,
+    authenticate,
     create_account,
     reset_password,
 )
@@ -74,3 +75,18 @@ def test_reset_password_nominal(db_session, amis_group):
 def test_reset_password_unknown_account_raises(db_session):
     with pytest.raises(AccountNotFound):
         reset_password(db_session, username="Inconnu", new_password="nouveaumotdepasse456")
+
+
+def test_authenticate_ok(db_session, amis_group):
+    create_account(db_session, username="Louise", password="motdepasse123", group_slug="amis")
+    account = authenticate(db_session, "Louise", "motdepasse123")
+    assert account is not None and account.username == "Louise"
+
+
+def test_authenticate_wrong_password(db_session, amis_group):
+    create_account(db_session, username="Louise", password="motdepasse123", group_slug="amis")
+    assert authenticate(db_session, "Louise", "wrongpassword") is None
+
+
+def test_authenticate_unknown_user(db_session):
+    assert authenticate(db_session, "Inconnu", "motdepasse123") is None
