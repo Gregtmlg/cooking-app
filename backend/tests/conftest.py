@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import app.models  # noqa: F401
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import app as fastapi_app
@@ -18,18 +19,11 @@ engine_test = create_engine(
 
 
 @pytest.fixture(scope="function")
-def client():
-    connection = engine_test.connect()
-    Base.metadata.create_all(bind=connection)
-
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
-    session = TestingSessionLocal()
-
+def client(db_session, monkeypatch):
+    monkeypatch.setattr(settings, "session_cookie_secure", False)
     def override_get_db():
-        try:
-            yield session
-        finally:
-            pass
+        yield db_session
+
 
     fastapi_app.dependency_overrides[get_db] = override_get_db
 
@@ -37,9 +31,6 @@ def client():
         yield c
 
     fastapi_app.dependency_overrides.clear()
-    session.close()
-    Base.metadata.drop_all(bind=connection)
-    connection.close()
 
 
 @pytest.fixture(scope="function")
@@ -63,3 +54,13 @@ def amis_group(db_session):
     db_session.add(group)
     db_session.commit()
     return group
+
+
+@pytest.fixture
+def account(db_session, amis_group):
+    from app.services.account_service import create_account
+
+    account = create_account(
+        db_session, username="Louise", password="motdepasse123", group_slug="amis"
+    )
+    return account

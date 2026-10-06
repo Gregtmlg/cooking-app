@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password
+from app.core.security import hash_password, needs_rehash, verify_dummy, verify_password
 from app.models.account import Account
 from app.models.group import Group
 from app.models.profile import Profile
@@ -85,4 +85,24 @@ def reset_password(db: Session, username: str, new_password: str) -> Account:
 
     db.commit()
     db.refresh(account)
+    return account
+
+
+def authenticate(db: Session, username: str, password: str) -> Account | None:
+    account = db.scalar(select(Account).where(Account.username == username))
+    if account is None:
+        # Vérification factice pour éviter de révéler l'existence d'un identifiant
+        # (anti-timing)
+        verify_dummy(password)
+        return None
+
+    if not verify_password(password, account.password_hash):
+        return None
+
+    # Vérifier si le mot de passe doit être rehashé
+    if needs_rehash(account.password_hash):
+        account.password_hash = hash_password(password)
+        db.commit()
+        db.refresh(account)
+
     return account
