@@ -26,6 +26,12 @@ class InvalidPassword(AccountServiceError): ...
 class AccountNotFound(AccountServiceError): ...
 
 
+class MultiProfileChangeForbidden(AccountServiceError): ...
+
+
+class WrongPassword(AccountServiceError): ...
+
+
 def _validate_password_length(password: str) -> None:
     if not (MIN_PASSWORD_LENGTH <= len(password) <= MAX_PASSWORD_LENGTH):
         raise InvalidPassword(
@@ -83,6 +89,23 @@ def reset_password(db: Session, username: str, new_password: str) -> Account:
         True  # Forcer le changement de mot de passe à la prochaine connexion
     )
 
+    db.commit()
+    db.refresh(account)
+    return account
+
+
+def change_password(db: Session, account: Account, old_password: str, new_password: str) -> Account:
+    if len(account.profiles) > 1:
+        raise MultiProfileChangeForbidden(
+            "Le changement de mot de passe ne peut être effectué que par l'administrateur."
+        )
+
+    _validate_password_length(new_password)
+    if not verify_password(old_password, account.password_hash):
+        raise WrongPassword("Ancien mot de passe incorrect.")
+
+    account.password_hash = hash_password(new_password)
+    account.must_change_password = False  # Le mot de passe a été changé avec succès
     db.commit()
     db.refresh(account)
     return account

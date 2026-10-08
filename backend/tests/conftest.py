@@ -22,9 +22,9 @@ engine_test = create_engine(
 @pytest.fixture(scope="function")
 def client(db_session, monkeypatch):
     monkeypatch.setattr(settings, "session_cookie_secure", False)
+
     def override_get_db():
         yield db_session
-
 
     fastapi_app.dependency_overrides[get_db] = override_get_db
 
@@ -87,9 +87,8 @@ def auth_session(db_session, account):
 def another_account(db_session, amis_group):
     from app.services.account_service import create_account
 
-    return create_account(
-        db_session, username="Autre", password="motdepasse123", group_slug="amis"
-    )
+    return create_account(db_session, username="Autre", password="motdepasse123", group_slug="amis")
+
 
 @pytest.fixture
 def multi_profile_account(db_session, amis_group):
@@ -97,11 +96,14 @@ def multi_profile_account(db_session, amis_group):
     from app.services.account_service import create_account
 
     account = create_account(
-        db_session, username="Famille", password="motdepasse123",
-        group_slug="amis", display_name="Michel",
+        db_session,
+        username="Famille",
+        password="motdepasse123",
+        group_slug="amis",
+        display_name="Michel",
     )
 
-    #Second profil ajouté directement
+    # Second profil ajouté directement
     jeanne = Profile(display_name="Jeanne", account_id=account.id)
     jeanne.groups.append(amis_group)
     db_session.add(jeanne)
