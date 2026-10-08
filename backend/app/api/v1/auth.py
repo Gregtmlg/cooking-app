@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 
-from app.api.deps import SESSION_COOKIE_NAME, CurrentAccount, DbSession
+from app.api.deps import SESSION_COOKIE_NAME, CurrentAccount, CurrentSession, DbSession
 from app.core.config import settings
 from app.core.rate_limit import rate_limit_login
-from app.schemas.auth import AccountRead, LoginRequest
-from app.services import account_service, session_service
+from app.schemas.auth import AccountRead, LoginRequest, ProfileRead, SelectProfileRequest
+from app.services import account_service, profile_service, session_service
+from app.services.profile_service import ProfileNotFound
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,8 +32,9 @@ def login(credentials: LoginRequest, db: DbSession, response: Response):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Identifiant ou mot de passe incorrect.",
         )
-
-    token = session_service.create_session(db, account.id)
+    # Auto-sélection si le compte n'a qu'un seul profil
+    profile_id = account.profiles[0].id if len(account.profiles) == 1 else None
+    token = session_service.create_session(db, account.id, profile_id=profile_id)
     _set_session_cookie(response, token)
     return account
 
@@ -51,3 +53,25 @@ def logout(
 @router.get("/me", response_model=AccountRead)
 def me(account: CurrentAccount):
     return account
+
+
+@router.get("/profiles", response_model=list[ProfileRead])
+def list_profiles(account: CurrentAccount):
+    """Liste les profils du compte connecté (pour l'écran de sélection)."""
+    return account.profiles
+
+
+@router.post("/select-profile", response_model=ProfileRead)
+def select_profile(
+    payload: SelectProfileRequest,
+    auth_session: CurrentSession,
+    db: DbSession,
+):
+    """Sélectionne le profil actif de la session."""
+    try:
+        return profile_service.select_profile(db, auth_session, payload.profile_id)
+    except ProfileNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from None

@@ -72,3 +72,39 @@ def reset_rate_limiter():
     rate_limit._attempts.clear()
     yield
     rate_limit._attempts.clear()
+
+
+@pytest.fixture
+def auth_session(db_session, account):
+    from app.models.session import AuthSession
+    from app.services.session_service import _hash_token, create_session
+
+    token = create_session(db_session, account.id)
+    return db_session.get(AuthSession, _hash_token(token))
+
+
+@pytest.fixture
+def another_account(db_session, amis_group):
+    from app.services.account_service import create_account
+
+    return create_account(
+        db_session, username="Autre", password="motdepasse123", group_slug="amis"
+    )
+
+@pytest.fixture
+def multi_profile_account(db_session, amis_group):
+    from app.models.profile import Profile
+    from app.services.account_service import create_account
+
+    account = create_account(
+        db_session, username="Famille", password="motdepasse123",
+        group_slug="amis", display_name="Michel",
+    )
+
+    #Second profil ajouté directement
+    jeanne = Profile(display_name="Jeanne", account_id=account.id)
+    jeanne.groups.append(amis_group)
+    db_session.add(jeanne)
+    db_session.commit()
+    db_session.refresh(account)
+    return account
