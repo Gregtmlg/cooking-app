@@ -70,9 +70,14 @@ def reset_password_cmd(
     db = SessionLocal()
     try:
         account = reset_password(db, username=username, new_password=password)
+        suite = (
+            "Changement de mot de passe requis à la prochaine connexion."
+            if account.must_change_password
+            else "Compte partagé (multi-profils) : ce mot de passe est définitif."
+        )
         typer.secho(
             f"✓ Mot de passe du compte « {account.username} » réinitialisé. "
-            f"Changement de mot de passe requis à la 1re connexion.",
+            f"{suite}",
             fg=typer.colors.GREEN,
         )
     except AccountServiceError as e:

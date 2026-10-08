@@ -86,8 +86,8 @@ def reset_password(db: Session, username: str, new_password: str) -> Account:
 
     account.password_hash = hash_password(new_password)
     account.must_change_password = (
-        True  # Forcer le changement de mot de passe à la prochaine connexion
-    )
+        len(account.profiles) == 1
+    )  # Forcer le changement de mot de passe si le compte n'a qu'un profil
 
     db.commit()
     db.refresh(account)

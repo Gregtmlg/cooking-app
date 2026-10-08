@@ -21,6 +21,8 @@ from app.services import session_service
 DbSession = Annotated[Session, Depends(get_db)]
 
 SESSION_COOKIE_NAME = "cooking_session"
+PROFILE_REQUIRED = "PROFILE_REQUIRED"
+PASSWORD_CHANGE_REQUIRED = "PASSWORD_CHANGE_REQUIRED"
 
 
 def get_current_session(
@@ -48,7 +50,8 @@ CurrentAccount = Annotated[Account, Depends(get_current_account)]
 def get_current_profile(auth_session: CurrentSession) -> Profile:
     if auth_session.profile is None:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Aucun profil sélectionné."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": PROFILE_REQUIRED, "message": "Aucun profil sélectionné."},
         )
     return auth_session.profile
 
@@ -60,7 +63,10 @@ def require_password_changed(account: CurrentAccount) -> Account:
     if account.must_change_password:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Vous devez d'abord changer votre mot de passe.",
+            detail={
+                "code": PASSWORD_CHANGE_REQUIRED,
+                "message": "Vous devez d'abord changer votre mot de passe.",
+            },
         )
     return account
 

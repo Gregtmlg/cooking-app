@@ -9,6 +9,7 @@ from app.schemas.auth import (
     LoginRequest,
     ProfileRead,
     SelectProfileRequest,
+    SessionRead,
 )
 from app.services import account_service, profile_service, session_service
 from app.services.account_service import (
@@ -35,7 +36,7 @@ def _set_session_cookie(response: Response, token: str) -> None:
     )
 
 
-@router.post("/login", response_model=AccountRead, dependencies=[Depends(rate_limit_login)])
+@router.post("/login", response_model=SessionRead, dependencies=[Depends(rate_limit_login)])
 def login(credentials: LoginRequest, db: DbSession, response: Response):
     account = account_service.authenticate(db, credentials.username, credentials.password)
     if account is None:
@@ -44,10 +45,12 @@ def login(credentials: LoginRequest, db: DbSession, response: Response):
             detail="Identifiant ou mot de passe incorrect.",
         )
     # Auto-sélection si le compte n'a qu'un seul profil
-    profile_id = account.profiles[0].id if len(account.profiles) == 1 else None
-    token = session_service.create_session(db, account.id, profile_id=profile_id)
+    profile = account.profiles[0] if len(account.profiles) == 1 else None
+    token = session_service.create_session(
+        db, account.id, profile_id=profile.id if profile else None
+    )
     _set_session_cookie(response, token)
-    return account
+    return {"account": account, "profile": profile}
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -61,9 +64,9 @@ def logout(
     response.delete_cookie(key=SESSION_COOKIE_NAME, path="/")
 
 
-@router.get("/me", response_model=AccountRead)
-def me(account: CurrentAccount):
-    return account
+@router.get("/me", response_model=SessionRead)
+def me(auth_session: CurrentSession):
+    return auth_session
 
 
 @router.get("/profiles", response_model=list[ProfileRead])
