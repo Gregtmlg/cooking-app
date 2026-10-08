@@ -29,3 +29,10 @@ class SelectProfileRequest(BaseModel):
 class ChangePasswordRequest(BaseModel):
     old_password: str
     new_password: str
+
+
+class SessionRead(BaseModel):
+    account: AccountRead
+    profile: ProfileRead | None = None
+
+    model_config = {"from_attributes": True}
