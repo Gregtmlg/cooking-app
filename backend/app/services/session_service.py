@@ -18,11 +18,12 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def create_session(db: Session, account_id: int) -> str:
+def create_session(db: Session, account_id: int, profile_id: int | None = None) -> str:
     token = secrets.token_urlsafe(32)
     auth_session = AuthSession(
         id=_hash_token(token),
         account_id=account_id,
+        profile_id=profile_id,
         expires_at=_utcnow() + SESSION_LIFETIME,
     )
     db.add(auth_session)

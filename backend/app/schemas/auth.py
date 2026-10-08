@@ -12,3 +12,15 @@ class AccountRead(BaseModel):
     is_admin: bool
 
     model_config = {"from_attributes": True}
+
+
+class ProfileRead(BaseModel):
+    id: int
+    display_name: str
+    avatar_url: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class SelectProfileRequest(BaseModel):
+    profile_id: int

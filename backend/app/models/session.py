@@ -8,6 +8,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.account import Account
+    from app.models.profile import Profile
 
 
 class AuthSession(Base):
@@ -24,3 +25,4 @@ class AuthSession(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
 
     account: Mapped["Account"] = relationship("Account", back_populates="sessions")
+    profile: Mapped["Profile | None"] = relationship("Profile")
