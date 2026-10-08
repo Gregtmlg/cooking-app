@@ -3,8 +3,19 @@ from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from app.api.deps import SESSION_COOKIE_NAME, CurrentAccount, CurrentSession, DbSession
 from app.core.config import settings
 from app.core.rate_limit import rate_limit_login
-from app.schemas.auth import AccountRead, LoginRequest, ProfileRead, SelectProfileRequest
+from app.schemas.auth import (
+    AccountRead,
+    ChangePasswordRequest,
+    LoginRequest,
+    ProfileRead,
+    SelectProfileRequest,
+)
 from app.services import account_service, profile_service, session_service
+from app.services.account_service import (
+    InvalidPassword,
+    MultiProfileChangeForbidden,
+    WrongPassword,
+)
 from app.services.profile_service import ProfileNotFound
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -73,5 +84,27 @@ def select_profile(
     except ProfileNotFound as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from None
+
+
+@router.post("/change-password", response_model=AccountRead)
+def change_password(
+    payload: ChangePasswordRequest,
+    account: CurrentAccount,
+    db: DbSession,
+):
+    try:
+        return account_service.change_password(
+            db, account, payload.old_password, payload.new_password
+        )
+    except MultiProfileChangeForbidden as e:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        ) from None
+    except (WrongPassword, InvalidPassword) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         ) from None

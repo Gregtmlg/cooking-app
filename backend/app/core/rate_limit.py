@@ -8,6 +8,7 @@ RATE_LIMIT_WINDOW_SECONDS = 60
 
 _attempts: dict[str, list[float]] = defaultdict(list)
 
+
 def _client_ip(request: Request) -> str:
     """Retourne l'IP du client, ou une chaîne vide si introuvable."""
     return request.headers.get("CF-Connecting-IP") or request.client.host

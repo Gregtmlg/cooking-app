@@ -5,8 +5,11 @@ from app.services.account_service import (
     AccountNotFound,
     GroupNotFound,
     InvalidPassword,
+    MultiProfileChangeForbidden,
     UsernameAlreadyExists,
+    WrongPassword,
     authenticate,
+    change_password,
     create_account,
     reset_password,
 )
@@ -90,3 +93,47 @@ def test_authenticate_wrong_password(db_session, amis_group):
 
 def test_authenticate_unknown_user(db_session):
     assert authenticate(db_session, "Inconnu", "motdepasse123") is None
+
+
+def test_change_password_nominal(db_session, account):
+    old_hash = account.password_hash
+    updated = change_password(
+        db_session, account, old_password="motdepasse123", new_password="nouveaumotdepasse456"
+    )
+    assert updated.password_hash != old_hash
+    assert verify_password("nouveaumotdepasse456", updated.password_hash) is True
+    assert updated.must_change_password is False
+
+
+def test_change_password_wrong_old(db_session, account):
+    with pytest.raises(WrongPassword):
+        change_password(
+            db_session, account, old_password="wrongpassword", new_password="nouveaumotdepasse456"
+        )
+
+
+def test_change_password_multi_profile_forbidden(db_session, multi_profile_account):
+    with pytest.raises(MultiProfileChangeForbidden):
+        change_password(
+            db_session,
+            multi_profile_account,
+            old_password="motdepasse123",
+            new_password="nouveaumotdepasse456",
+        )
+
+
+def test_change_password_new_too_short(db_session, account):
+    with pytest.raises(InvalidPassword):
+        change_password(db_session, account, old_password="motdepasse123", new_password="short")
+
+
+def test_change_password_multi_profile_checked_before_old_password(
+    db_session, multi_profile_account
+):
+    with pytest.raises(MultiProfileChangeForbidden):
+        change_password(
+            db_session,
+            multi_profile_account,
+            old_password="wrongpassword",
+            new_password="nouveaumotdepasse456",
+        )

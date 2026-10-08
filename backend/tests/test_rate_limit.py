@@ -1,4 +1,3 @@
-
 def test_login_rate_limited_after_5_attempts(client, account):
     # 5 tentatives (mauvais mot de passe) → toutes passent la garde (401)
     for _ in range(5):

@@ -12,7 +12,6 @@ class ProfileNotFound(ProfileServiceError):
     """Le profil demandé n'existe pas."""
 
 
-
 def select_profile(db: Session, auth_session: AuthSession, profile_id: int) -> Profile:
     """
     Sélectionne un profil pour la session donnée.

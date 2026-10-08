@@ -4,6 +4,7 @@ Centraliser les alias ici évite de répéter `Depends(...)` dans chaque
 signature, et fournit un point unique où ajouter les dépendances futures
 (profil courant, permissions...).
 """
+
 from typing import Annotated
 
 from fastapi import Cookie, Depends, HTTPException, status
@@ -21,9 +22,10 @@ DbSession = Annotated[Session, Depends(get_db)]
 
 SESSION_COOKIE_NAME = "cooking_session"
 
+
 def get_current_session(
-        db: DbSession,
-        session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
+    db: DbSession,
+    session_token: str | None = Cookie(default=None, alias=SESSION_COOKIE_NAME),
 ) -> AuthSession:
     if session_token is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Non authentifié.")
@@ -32,12 +34,16 @@ def get_current_session(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Session invalide.")
     return auth_session
 
+
 CurrentSession = Annotated[AuthSession, Depends(get_current_session)]
+
 
 def get_current_account(auth_session: CurrentSession) -> Account:
     return auth_session.account
 
+
 CurrentAccount = Annotated[Account, Depends(get_current_account)]
+
 
 def get_current_profile(auth_session: CurrentSession) -> Profile:
     if auth_session.profile is None:
@@ -46,4 +52,17 @@ def get_current_profile(auth_session: CurrentSession) -> Profile:
         )
     return auth_session.profile
 
+
 CurrentProfile = Annotated[Profile, Depends(get_current_profile)]
+
+
+def require_password_changed(account: CurrentAccount) -> Account:
+    if account.must_change_password:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous devez d'abord changer votre mot de passe.",
+        )
+    return account
+
+
+PasswordChanged = Annotated[Account, Depends(require_password_changed)]
