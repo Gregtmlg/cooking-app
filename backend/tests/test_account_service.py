@@ -80,6 +80,12 @@ def test_reset_password_unknown_account_raises(db_session):
         reset_password(db_session, username="Inconnu", new_password="nouveaumotdepasse456")
 
 
+def test_reset_password_multi_profile_not_forced(db_session, multi_profile_account):
+    updated = reset_password(db_session, username="Famille", new_password="phrasedepasselongue")
+    assert verify_password("phrasedepasselongue", updated.password_hash) is True
+    assert updated.must_change_password is False
+
+
 def test_authenticate_ok(db_session, amis_group):
     create_account(db_session, username="Louise", password="motdepasse123", group_slug="amis")
     account = authenticate(db_session, "Louise", "motdepasse123")
