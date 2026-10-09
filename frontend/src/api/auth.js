@@ -7,31 +7,31 @@
 import api from './client'
 
 export async function login(username, password) {
-    const response = await api.post('/api/v1/auth/login/', { username, password })
+    const response = await api.post('/api/v1/auth/login', { username, password })
     return response.data
 }
 
 export async function logout() {
-    await api.post('/api/v1/auth/logout/')
+    await api.post('/api/v1/auth/logout')
 }
 
 export async function getMe() {
-    const response = await api.get('/api/v1/auth/me/')
+    const response = await api.get('/api/v1/auth/me')
     return response.data
 }
 
 export async function getProfiles() {
-    const response = await api.get('/api/v1/auth/profiles/')
+    const response = await api.get('/api/v1/auth/profiles')
     return response.data
 }
 
 export async function selectProfile(profileId) {
-    const response = await api.post('/api/v1/auth/select-profile/', { profile_id: profileId })
+    const response = await api.post('/api/v1/auth/select-profile', { profile_id: profileId })
     return response.data
 }
 
 export async function changePassword(oldPassword, newPassword) {
-    const response = await api.post('/api/v1/auth/change-password/', {
+    const response = await api.post('/api/v1/auth/change-password', {
         old_password: oldPassword,
         new_password: newPassword
     })
