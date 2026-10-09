@@ -1,0 +1,1 @@
+export default function LoginPage() { return <p>Sélection de profil — à venir</p> }

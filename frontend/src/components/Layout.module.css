@@ -34,3 +34,31 @@
     max-width: 900px;
     margin: 0 auto;
 }
+
+.session {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profileName {
+  color: var(--color-light);
+  font-size: 0.95rem;
+}
+
+.logoutButton {
+  font: inherit;
+  font-size: 0.9rem;
+  background: transparent;
+  color: #C4957A;
+  border: 0.5px solid #C4957A;
+  border-radius: var(--radius-sm);
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.logoutButton:hover {
+  color: var(--color-light);
+  border-color: var(--color-light);
+}
