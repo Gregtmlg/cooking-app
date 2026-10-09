@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import styles from './LoginPage.module.css'
+import styles from './AuthForm.module.css'
 
 // Messages choisis côté front : on n'affiche jamais un `detail` brut (ex. 422 Pydantic).
 function errorMessage(err) {

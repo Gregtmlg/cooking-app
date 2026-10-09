@@ -1,4 +1,6 @@
-/* Page neutre (§7.7) : en amont de tout groupe, donc palette de base, pas de marque. */
+/* src/pages/AuthForm.module.css
+   Carte de formulaire partagée par les écrans d'authentification
+   (connexion, changement de mot de passe). Palette de base, sans thème de groupe. */
 
 .page {
   min-height: 100dvh;
@@ -37,6 +39,21 @@
   text-align: center;
 }
 
+/* Bandeau d'explication (ex. mot de passe provisoire) */
+.info {
+  background-color: var(--color-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.95rem;
+}
+
+/* Petite aide sous un champ */
+.hint {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: var(--space-xs);
+}
+
 .submit {
   font: inherit;
   background-color: var(--color-accent);
@@ -50,4 +67,16 @@
 .submit:disabled {
   opacity: 0.6;
   cursor: wait;
+}
+
+/* Action secondaire discrète (déconnexion, annulation) */
+.secondary {
+  font: inherit;
+  font-size: 0.9rem;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+  align-self: center;
 }

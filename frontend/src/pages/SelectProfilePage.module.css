@@ -1,0 +1,85 @@
+/* src/pages/SelectProfilePage.module.css */
+
+.page {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xl);
+  padding: var(--space-lg);
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--color-dark);
+  text-align: center;
+}
+
+.error {
+  color: var(--color-accent);
+}
+
+.loading {
+  color: var(--color-text-muted);
+}
+
+.grid {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xl);
+}
+
+.profile {
+  font: inherit;
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.profile:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-lg);
+  background-color: var(--color-mid);
+  color: var(--color-dark);
+  font-family: var(--font-serif);
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.profile:hover .avatar,
+.profile:focus-visible .avatar {
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+}
+
+.name {
+  font-size: 1.05rem;
+}
+
+.logout {
+  font: inherit;
+  font-size: 0.9rem;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
