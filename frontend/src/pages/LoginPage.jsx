@@ -1,0 +1,1 @@
+export default function LoginPage() { return <p>Connexion — à venir</p> }
