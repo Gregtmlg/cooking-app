@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AuthContext } from './AuthContext'
 import * as authApi from '../api/auth'
+import { setAuthStateChangedHandler } from '../api/client'
 
 const ANONYMOUS = { status: 'anonymous', account: null, profile: null }
 
@@ -47,6 +48,13 @@ export default function AuthProvider({ children }) {
       setState(ANONYMOUS)
     }
   }, [])
+
+    // Abonnement de l'intercepteur Axios : on lui confie refresh.
+    // Nettoyage : si le provider disparaît, on vide la boîte aux lettres.
+  useEffect(() => {
+    setAuthStateChangedHandler(refresh)
+    return () => setAuthStateChangedHandler(null)
+  }, [refresh])
 
   async function login(username, password) {
     const session = await authApi.login(username, password) // lève si 401 → la page affiche

@@ -17,6 +17,7 @@ function Layout() {
           <Link className={styles.navLink} to="/recipes/new">Créer une recette</Link>
         </nav>
         <div className={styles.session}>
+          <Link className={styles.navLink} to="/select-profile">Changer de profil</Link>
           <span className={styles.profileName}>{profile.display_name}</span>
           <button className={styles.logoutButton} type="button" onClick={logout}>
             Se déconnecter
