@@ -110,3 +110,16 @@ def multi_profile_account(db_session, amis_group):
     db_session.commit()
     db_session.refresh(account)
     return account
+
+
+@pytest.fixture
+def auth_client(client, db_session, account):
+    # create_account pose must_change_password = True : sans ça,
+    # toute route recettes renverrait 403 PASSWORD_CHANGE_REQUIRED.
+    account.must_change_password = False
+    db_session.commit()
+    response = client.post(
+        "/api/v1/auth/login", json={"username": "Louise", "password": "motdepasse123"}
+    )
+    assert response.status_code == 200  # échec bruyant si le login casse
+    return client

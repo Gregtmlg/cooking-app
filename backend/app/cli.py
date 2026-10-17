@@ -76,8 +76,7 @@ def reset_password_cmd(
             else "Compte partagé (multi-profils) : ce mot de passe est définitif."
         )
         typer.secho(
-            f"✓ Mot de passe du compte « {account.username} » réinitialisé. "
-            f"{suite}",
+            f"✓ Mot de passe du compte « {account.username} » réinitialisé. {suite}",
             fg=typer.colors.GREEN,
         )
     except AccountServiceError as e:
