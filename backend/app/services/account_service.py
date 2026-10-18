@@ -5,6 +5,7 @@ from app.core.security import hash_password, needs_rehash, verify_dummy, verify_
 from app.models.account import Account
 from app.models.group import Group
 from app.models.profile import Profile
+from app.services.session_service import delete_account_session
 
 MIN_PASSWORD_LENGTH = 8
 MAX_PASSWORD_LENGTH = 128
@@ -89,6 +90,7 @@ def reset_password(db: Session, username: str, new_password: str) -> Account:
         len(account.profiles) == 1
     )  # Forcer le changement de mot de passe si le compte n'a qu'un profil
 
+    delete_account_session(db, account.id)
     db.commit()
     db.refresh(account)
     return account

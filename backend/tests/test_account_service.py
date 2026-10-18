@@ -1,6 +1,8 @@
 import pytest
+from sqlalchemy import select
 
 from app.core.security import verify_password
+from app.models.session import AuthSession
 from app.services.account_service import (
     AccountNotFound,
     GroupNotFound,
@@ -143,3 +145,32 @@ def test_change_password_multi_profile_checked_before_old_password(
             old_password="wrongpassword",
             new_password="nouveaumotdepasse456",
         )
+
+
+def test_reset_password_revokes_all_sessions(db_session, account):
+    from app.services.session_service import create_session
+
+    create_session(db_session, account.id)
+    create_session(db_session, account.id)
+
+    reset_password(db_session, username="Louise", new_password="Nouveaumotdepasse456")
+    assert (
+        db_session.scalars(select(AuthSession).where(AuthSession.account_id == account.id)).all()
+        == []
+    )
+
+
+def test_reset_password_keeps_other_accounts_session(db_session, account, another_account):
+    from app.services.session_service import create_session
+
+    create_session(db_session, another_account.id)
+
+    reset_password(db_session, username="Louise", new_password="Nouveaumotdepasse456")
+    assert (
+        len(
+            db_session.scalars(
+                select(AuthSession).where(AuthSession.account_id == another_account.id)
+            ).all()
+        )
+        == 1
+    )

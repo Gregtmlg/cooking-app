@@ -49,3 +49,12 @@ def test_logout(client, account):
     assert r.status_code == 204
     r = client.get("/api/v1/auth/me")
     assert r.status_code == 401
+
+
+def test_reset_password_logs_out_open_session(client, db_session, account):
+    from app.services.account_service import reset_password
+
+    client.post("/api/v1/auth/login", json={"username": "Louise", "password": "motdepasse123"})
+    assert client.get("/api/v1/auth/me").status_code == 200
+    reset_password(db_session, username="Louise", new_password="nouveaumotdepasse456")
+    assert client.get("/api/v1/auth/me").status_code == 401
