@@ -2,6 +2,7 @@ import hashlib
 import secrets
 from datetime import UTC, datetime, timedelta
 
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.models.session import AuthSession
@@ -53,3 +54,9 @@ def delete_session(db: Session, token: str) -> None:
     if session:
         db.delete(session)
         db.commit()
+
+
+def delete_account_session(db: Session, account_id: int) -> None:
+    """Révoque toutes les sessions d'un compte. Ne commite pas : l'appelant décide."""
+
+    db.execute(delete(AuthSession).where(AuthSession.account_id == account_id))
