@@ -15,6 +15,7 @@ from app.services import account_service, profile_service, session_service
 from app.services.account_service import (
     InvalidPassword,
     MultiProfileChangeForbidden,
+    PasswordChangeNotRequired,
     WrongPassword,
 )
 from app.services.profile_service import ProfileNotFound
@@ -101,7 +102,7 @@ def change_password(
         return account_service.change_password(
             db, account, payload.old_password, payload.new_password
         )
-    except MultiProfileChangeForbidden as e:
+    except (MultiProfileChangeForbidden, PasswordChangeNotRequired) as e:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e),

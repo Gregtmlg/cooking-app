@@ -8,6 +8,7 @@ from app.services.account_service import (
     GroupNotFound,
     InvalidPassword,
     MultiProfileChangeForbidden,
+    PasswordChangeNotRequired,
     UsernameAlreadyExists,
     WrongPassword,
     authenticate,
@@ -174,3 +175,16 @@ def test_reset_password_keeps_other_accounts_session(db_session, account, anothe
         )
         == 1
     )
+
+
+def test_change_password_refused_when_not_required(db_session, account):
+    account.must_change_password = False
+    db_session.commit()
+    old_hash = account.password_hash
+
+    with pytest.raises(PasswordChangeNotRequired):
+        change_password(
+            db_session, account, old_password="motdepasse123", new_password="nouveaumotdepasse456"
+        )
+
+    assert account.password_hash == old_hash
