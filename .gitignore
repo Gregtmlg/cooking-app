@@ -16,6 +16,7 @@ build/
 # Base de données
 *.db
 *.sqlite3
+*.bak
 
 # Node
 node_modules/
