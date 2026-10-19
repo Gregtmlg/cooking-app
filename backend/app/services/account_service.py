@@ -33,6 +33,9 @@ class MultiProfileChangeForbidden(AccountServiceError): ...
 class WrongPassword(AccountServiceError): ...
 
 
+class PasswordChangeNotRequired(AccountServiceError): ...
+
+
 def _validate_password_length(password: str) -> None:
     if not (MIN_PASSWORD_LENGTH <= len(password) <= MAX_PASSWORD_LENGTH):
         raise InvalidPassword(
@@ -100,6 +103,11 @@ def change_password(db: Session, account: Account, old_password: str, new_passwo
     if len(account.profiles) > 1:
         raise MultiProfileChangeForbidden(
             "Le changement de mot de passe ne peut être effectué que par l'administrateur."
+        )
+
+    if not account.must_change_password:
+        raise PasswordChangeNotRequired(
+            "Aucun changement de mot de passe n'est attendu. Contactez l'administrateur."
         )
 
     _validate_password_length(new_password)

@@ -4,7 +4,7 @@
 // Les vérifications locales sont du confort ; l'autorité reste le backend.
 
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import styles from './AuthForm.module.css'
 
@@ -15,7 +15,7 @@ const MAX_LENGTH = 128
 function errorMessage(err) {
   const status = err.response?.status
   if (status === 403) {
-    return "Ce compte est partagé : seul l'administrateur peut changer son mot de passe."
+    return "Changement impossible : seul l'administrateur peut modifier ce mot de passe."
   }
   if (status === 400) {
     // WrongPassword / InvalidPassword : messages métier déjà rédigés pour l'humain.
@@ -32,6 +32,10 @@ export default function ChangePasswordPage() {
   const [confirmation, setConfirmation] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  
+  if (!account.must_change_password) {
+    return <Navigate to="/" replace />
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -63,11 +67,9 @@ export default function ChangePasswordPage() {
       <form className={styles.card} onSubmit={handleSubmit}>
         <h1 className={styles.title}>Nouveau mot de passe</h1>
 
-        {account.must_change_password && (
-          <p className={styles.info}>
-            Votre mot de passe actuel est provisoire. Choisissez-en un nouveau pour continuer.
-          </p>
-        )}
+        <p className={styles.info}>
+          Votre mot de passe actuel est provisoire. Choisissez-en un nouveau pour continuer.
+        </p>
 
         {error && (
           <p className={styles.error} role="alert">

@@ -58,3 +58,12 @@ def test_reset_password_logs_out_open_session(client, db_session, account):
     assert client.get("/api/v1/auth/me").status_code == 200
     reset_password(db_session, username="Louise", new_password="nouveaumotdepasse456")
     assert client.get("/api/v1/auth/me").status_code == 401
+
+
+def test_change_password_forbidden_without_provisional_password(auth_client):
+    request = auth_client.post(
+        "/api/v1/auth/change-password",
+        json={"old_password": "motdepasse123", "new_password": "nouveaumotdepasse456"},
+    )
+
+    assert request.status_code == 403
