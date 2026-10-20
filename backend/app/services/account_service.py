@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password, needs_rehash, verify_dummy, verify_password
 from app.models.account import Account
-from app.models.group import Group
 from app.models.profile import Profile
+from app.services.group_service import get_group_by_slug
 from app.services.session_service import delete_account_session
 
 MIN_PASSWORD_LENGTH = 8
@@ -16,9 +16,6 @@ class AccountServiceError(Exception):
 
 
 class UsernameAlreadyExists(AccountServiceError): ...
-
-
-class GroupNotFound(AccountServiceError): ...
 
 
 class InvalidPassword(AccountServiceError): ...
@@ -48,7 +45,7 @@ def create_account(
     db: Session,
     username: str,
     password: str,
-    group_slug: str,
+    group_slug: str | None = None,
     display_name: str | None = None,
     is_admin: bool = False,
 ) -> Account:
@@ -58,9 +55,8 @@ def create_account(
     if db.scalar(select(Account).where(Account.username == username)) is not None:
         raise UsernameAlreadyExists(f"L'identifiant '{username}' est déjà pris.")
 
-    group = db.scalar(select(Group).where(Group.slug == group_slug))
-    if group is None:
-        raise GroupNotFound(f"Le groupe '{group_slug}' n'existe pas.")
+    # Sans groupe : utilisateur « lambda ». Validé AVANT tout calcul coûteux.
+    group = get_group_by_slug(db, group_slug) if group_slug is not None else None
 
     password_hash = hash_password(password)
 
@@ -72,7 +68,8 @@ def create_account(
     )
 
     profile = Profile(display_name=display_name or username)
-    profile.groups.append(group)
+    if group is not None:
+        profile.groups.append(group)
     account.profiles.append(profile)
 
     db.add(account)
