@@ -5,7 +5,6 @@ from app.core.security import verify_password
 from app.models.session import AuthSession
 from app.services.account_service import (
     AccountNotFound,
-    GroupNotFound,
     InvalidPassword,
     MultiProfileChangeForbidden,
     PasswordChangeNotRequired,
@@ -16,43 +15,46 @@ from app.services.account_service import (
     create_account,
     reset_password,
 )
+from app.services.group_service import GroupNotFound
 
 
-def test_create_account_nominal(db_session, amis_group):
+def test_create_account_nominal(db_session, chuteam_group):
     account = create_account(
-        db_session, username="Louise", password="motdepasse123", group_slug="amis"
+        db_session, username="Louise", password="motdepasse123", group_slug="chuteam"
     )
     assert account.id is not None
     assert len(account.profiles) == 1
-    assert account.profiles[0].groups[0].slug == "amis"
+    assert account.profiles[0].groups[0].slug == "chuteam"
 
 
-def test_password_is_hashed(db_session, amis_group):
+def test_password_is_hashed(db_session, chuteam_group):
     account = create_account(
-        db_session, username="Louise", password="motdepasse123", group_slug="amis"
+        db_session, username="Louise", password="motdepasse123", group_slug="chuteam"
     )
     assert account.password_hash != "motdepasse123"
     assert verify_password("motdepasse123", account.password_hash) is True
 
 
-def test_must_change_password_is_true(db_session, amis_group):
+def test_must_change_password_is_true(db_session, chuteam_group):
     account = create_account(
-        db_session, username="Louise", password="motdepasse123", group_slug="amis"
+        db_session, username="Louise", password="motdepasse123", group_slug="chuteam"
     )
     assert account.must_change_password is True
 
 
-def test_display_name_defaults_to_username(db_session, amis_group):
+def test_display_name_defaults_to_username(db_session, chuteam_group):
     account = create_account(
-        db_session, username="Louise", password="motdepasse123", group_slug="amis"
+        db_session, username="Louise", password="motdepasse123", group_slug="chuteam"
     )
     assert account.profiles[0].display_name == "Louise"
 
 
-def test_duplicate_username_raises(db_session, amis_group):
-    create_account(db_session, username="Louise", password="motdepasse123", group_slug="amis")
+def test_duplicate_username_raises(db_session, chuteam_group):
+    create_account(db_session, username="Louise", password="motdepasse123", group_slug="chuteam")
     with pytest.raises(UsernameAlreadyExists):
-        create_account(db_session, username="Louise", password="autremotdepasse", group_slug="amis")
+        create_account(
+            db_session, username="Louise", password="autremotdepasse", group_slug="chuteam"
+        )
 
 
 def test_unknown_group_raises(db_session):
@@ -62,14 +64,14 @@ def test_unknown_group_raises(db_session):
         )
 
 
-def test_password_too_short_raises(db_session, amis_group):
+def test_password_too_short_raises(db_session, chuteam_group):
     with pytest.raises(InvalidPassword):
-        create_account(db_session, username="Louise", password="short", group_slug="amis")
+        create_account(db_session, username="Louise", password="short", group_slug="chuteam")
 
 
-def test_reset_password_nominal(db_session, amis_group):
+def test_reset_password_nominal(db_session, chuteam_group):
     account = create_account(
-        db_session, username="Louise", password="motdepasse123", group_slug="amis"
+        db_session, username="Louise", password="motdepasse123", group_slug="chuteam"
     )
     old_hash = account.password_hash
     updated = reset_password(db_session, username="Louise", new_password="nouveaumotdepasse456")
@@ -89,14 +91,14 @@ def test_reset_password_multi_profile_not_forced(db_session, multi_profile_accou
     assert updated.must_change_password is False
 
 
-def test_authenticate_ok(db_session, amis_group):
-    create_account(db_session, username="Louise", password="motdepasse123", group_slug="amis")
+def test_authenticate_ok(db_session, chuteam_group):
+    create_account(db_session, username="Louise", password="motdepasse123", group_slug="chuteam")
     account = authenticate(db_session, "Louise", "motdepasse123")
     assert account is not None and account.username == "Louise"
 
 
-def test_authenticate_wrong_password(db_session, amis_group):
-    create_account(db_session, username="Louise", password="motdepasse123", group_slug="amis")
+def test_authenticate_wrong_password(db_session, chuteam_group):
+    create_account(db_session, username="Louise", password="motdepasse123", group_slug="chuteam")
     assert authenticate(db_session, "Louise", "wrongpassword") is None
 
 
@@ -188,3 +190,8 @@ def test_change_password_refused_when_not_required(db_session, account):
         )
 
     assert account.password_hash == old_hash
+
+
+def test_create_account_without_group(db_session):
+    account = create_account(db_session, username="Lambda", password="motdepasse123")
+    assert account.profiles[0].groups == []

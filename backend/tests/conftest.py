@@ -49,20 +49,20 @@ def db_session():
 
 
 @pytest.fixture
-def amis_group(db_session):
+def chuteam_group(db_session):
 
-    group = Group(slug="amis", name="Amis")
+    group = Group(slug="chuteam", name="ChuTeam")
     db_session.add(group)
     db_session.commit()
     return group
 
 
 @pytest.fixture
-def account(db_session, amis_group):
+def account(db_session, chuteam_group):
     from app.services.account_service import create_account
 
     account = create_account(
-        db_session, username="Louise", password="motdepasse123", group_slug="amis"
+        db_session, username="Louise", password="motdepasse123", group_slug="chuteam"
     )
     return account
 
@@ -84,14 +84,16 @@ def auth_session(db_session, account):
 
 
 @pytest.fixture
-def another_account(db_session, amis_group):
+def another_account(db_session, chuteam_group):
     from app.services.account_service import create_account
 
-    return create_account(db_session, username="Autre", password="motdepasse123", group_slug="amis")
+    return create_account(
+        db_session, username="Autre", password="motdepasse123", group_slug="chuteam"
+    )
 
 
 @pytest.fixture
-def multi_profile_account(db_session, amis_group):
+def multi_profile_account(db_session, chuteam_group):
     from app.models.profile import Profile
     from app.services.account_service import create_account
 
@@ -99,13 +101,13 @@ def multi_profile_account(db_session, amis_group):
         db_session,
         username="Famille",
         password="motdepasse123",
-        group_slug="amis",
+        group_slug="chuteam",
         display_name="Michel",
     )
 
     # Second profil ajouté directement
     jeanne = Profile(display_name="Jeanne", account_id=account.id)
-    jeanne.groups.append(amis_group)
+    jeanne.groups.append(chuteam_group)
     db_session.add(jeanne)
     db_session.commit()
     db_session.refresh(account)

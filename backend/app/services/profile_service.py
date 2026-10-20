@@ -1,5 +1,7 @@
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.models.account import Account
 from app.models.profile import Profile
 from app.models.session import AuthSession
 
@@ -10,6 +12,10 @@ class ProfileServiceError(Exception):
 
 class ProfileNotFound(ProfileServiceError):
     """Le profil demandé n'existe pas."""
+
+
+class AmbiguousProfile(ProfileServiceError):
+    """Plusieurs profils correspondent : il faut préciser lequel."""
 
 
 def select_profile(db: Session, auth_session: AuthSession, profile_id: int) -> Profile:
@@ -33,3 +39,27 @@ def select_profile(db: Session, auth_session: AuthSession, profile_id: int) -> P
     auth_session.profile_id = profile.id
     db.commit()
     return profile
+
+
+def find_profile(db: Session, username: str, display_name: str | None = None) -> Profile:
+    """Retrouve un profil par son compte et, si besoin, son nom affiché.
+
+    `display_name` peut être omis quand le compte n'a qu'un profil.
+    """
+    account = db.scalar(select(Account).where(Account.username == username))
+    if account is None:
+        raise ProfileNotFound(f"Le compte {username} n'existe pas.")
+
+    if display_name is None:
+        candidates = account.profiles
+    else:
+        candidates = [p for p in account.profiles if p.display_name == display_name]
+
+    if not candidates:
+        raise ProfileNotFound(f"Aucun profil « {display_name} » dans le compte '{username}'.")
+    if len(candidates) > 1:
+        raise AmbiguousProfile(
+            f"Le compte '{username}' a plusieurs profils correspondants : précisez lequel."
+        )
+
+    return candidates[0]

@@ -15,9 +15,9 @@ from app.services.session_service import (
 
 
 @pytest.fixture
-def account(db_session, amis_group):
+def account(db_session, chuteam_group):
     return create_account(
-        db_session, username="louise", password="motdepasse123", group_slug="amis"
+        db_session, username="louise", password="motdepasse123", group_slug="chuteam"
     )
 
 
