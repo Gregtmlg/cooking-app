@@ -9,6 +9,22 @@ from app.models.recipe_ingredient import RecipeIngredient
 from app.schemas.recipe import RecipeCreate, RecipeUpdate
 
 
+class RecipeServiceError(Exception):
+    """Erreur métier liée aux recettes."""
+
+
+class RecipeEditForbidden(RecipeServiceError):
+    """Recette visible, mais le profil n'a pas le droit de la modifier."""
+
+
+def can_edit(profile: Profile, recipe: Recipe) -> bool:
+    """RÈGLE UNIQUE des droits d'écriture : le propriétaire ou l'admin.
+
+    Sert à la fois à remplir `can_edit` dans les réponses et à refuser PATCH / DELETE.
+    """
+    return profile.account.is_admin or recipe.owner_id == profile.id
+
+
 def visible_recipes(profile: Profile) -> Select[tuple[Recipe]]:
     """POINT D'APPLICATION UNIQUE du filtre d'audience.
 
@@ -84,7 +100,9 @@ def update_recipe(
 ) -> Recipe | None:
     db_recipe = get_recipe(db, profile, recipe_id)
     if not db_recipe:
-        return None
+        return None  # invisible ou inexistante → 404 (on ne révèle rien)
+    if not can_edit(profile, db_recipe):
+        raise RecipeEditForbidden("Seul l'auteur de la recette peut la modifier.")
 
     for field, value in recipe_in.model_dump(exclude_unset=True).items():
         # .model_dump(exclude_unset=True) permet de ne récupérer
@@ -121,7 +139,9 @@ def update_recipe(
 def delete_recipe(db: Session, profile: Profile, recipe_id: int) -> Recipe | None:
     db_recipe = get_recipe(db, profile, recipe_id)
     if not db_recipe:
-        return None
+        return None  # invisible ou inexistante → 404 (on ne révèle rien)
+    if not can_edit(profile, db_recipe):
+        raise RecipeEditForbidden("Seul l'auteur de la recette peut la modifier.")
 
     db.execute(delete(RecipeIngredient).where(RecipeIngredient.recipe_id == recipe_id))
     db.delete(db_recipe)

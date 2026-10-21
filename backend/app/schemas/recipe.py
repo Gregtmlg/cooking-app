@@ -37,5 +37,6 @@ class RecipeRead(RecipeBase):
     ingredients: (
         list[RecipeIngredientRead] | None
     )  # Obligatoire — doit être fourni, peut valoir None
+    can_edit: bool = False  # champ calculé, pas en bdd : par défaut à False
 
     model_config = {"from_attributes": True}
