@@ -10,6 +10,7 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import app as fastapi_app
 from app.models.group import Group
+from app.models.recipe import Recipe
 
 SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 
@@ -125,3 +126,50 @@ def auth_client(client, db_session, account):
     )
     assert response.status_code == 200  # échec bruyant si le login casse
     return client
+
+
+@pytest.fixture
+def world(db_session):
+    """Deux groupes, six profils, quatre recettes — un petit monde complet."""
+    from app.services.account_service import create_account
+
+    famille = Group(slug="famille", name="Famille")
+    chuteam = Group(slug="chuteam", name="ChuTeam")
+    db_session.add_all([famille, chuteam])
+    db_session.commit()
+
+    def profile(username, *slugs, admin=False):
+        account = create_account(
+            db_session, username=username, password="motdepasse123", is_admin=admin
+        )
+        p = account.profiles[0]
+        p.groups.extend(g for g in (famille, chuteam) if g.slug in slugs)
+        db_session.commit()
+        return p
+
+    profiles = {
+        "auteur": profile("auteur"),  # sans groupe : propriétaire des recettes
+        "lambda": profile("lambda"),  # sans groupe
+        "fam": profile("fam", "famille"),
+        "chu": profile("chu", "chuteam"),
+        "multi": profile("multi", "famille", "chuteam"),
+        "admin": profile("admin", admin=True),
+    }
+
+    def recipe(title, *, visible_to_all=False, audience=()):
+        r = Recipe(
+            title=title,
+            instructions="…",
+            owner_id=profiles["auteur"].id,
+            visible_to_all=visible_to_all,
+            audience=list(audience),
+        )
+        db_session.add(r)
+        return r
+
+    recipe("tous", visible_to_all=True)
+    recipe("famille", audience=[famille])
+    recipe("chuteam", audience=[chuteam])
+    recipe("privee")
+    db_session.commit()
+    return profiles
