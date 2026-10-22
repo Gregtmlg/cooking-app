@@ -50,7 +50,7 @@ def create_account_cmd(
         group_label = f"groupe « {group} »" if group else "sans groupe"
         typer.secho(
             f"✓ Compte « {account.username} » créé "
-            f"(profil « {profile.display_name} », groupe « {group_label} »"
+            f"(profil « {profile.display_name} », {group_label}"
             f"{', admin' if admin else ''}). "
             f"Changement de mot de passe requis à la 1re connexion.",
             fg=typer.colors.GREEN,
