@@ -7,6 +7,7 @@ from app.models.profile import Profile
 from app.models.recipe import Recipe
 from app.models.recipe_ingredient import RecipeIngredient
 from app.schemas.recipe import RecipeCreate, RecipeUpdate
+from app.services.group_service import get_group_by_slug
 
 
 class RecipeServiceError(Exception):
@@ -15,6 +16,10 @@ class RecipeServiceError(Exception):
 
 class RecipeEditForbidden(RecipeServiceError):
     """Recette visible, mais le profil n'a pas le droit de la modifier."""
+
+
+class AudienceForbidden(RecipeServiceError):
+    """Le profil tente de publier pour un groupe dont il n'est pas membre."""
 
 
 def can_edit(profile: Profile, recipe: Recipe) -> bool:
@@ -47,6 +52,33 @@ def visible_recipes(profile: Profile) -> Select[tuple[Recipe]]:
     )
 
 
+def audience_options(db: Session, profile: Profile) -> list[Group]:
+    """Groupes pour lesquels ce profil peut publier (« Tous » / « Moi » s'ajoutent côté front)."""
+    if profile.account.is_admin:
+        return list(db.scalars(select(Group).order_by(Group.name)))
+    return sorted(profile.groups, key=lambda group: group.name)
+
+
+def _resolve_audience(
+    db: Session, profile: Profile, slugs: list[str], current: list[Group] | None = None
+) -> list[Group]:
+    """Slugs → groupes, en vérifiant le droit de publier pour chacun.
+
+    Autorisé : l'admin ; un groupe dont le profil est membre ; un groupe DÉJÀ dans
+    l'audience actuelle de la recette (`current`) — on peut le conserver, pas l'ajouter.
+    Lève GroupNotFound (slug inconnu) ou AudienceForbidden.
+    """
+    current = current or []
+    groups = []
+    for slug in dict.fromkeys(slugs):  # dédoublonne en gardant l'ordre
+        group = get_group_by_slug(db, slug)
+        allowed = profile.account.is_admin or group in profile.groups or group in current
+        if not allowed:
+            raise AudienceForbidden(f"Vous ne pouvez pas publier pour le groupe '{slug}'.")
+        groups.append(group)
+    return groups
+
+
 def get_recipe(db: Session, profile: Profile, recipe_id: int) -> Recipe | None:
     """Une recette visible par ce profil, sinon None (inexistante ou invisible : même réponse)."""
     return db.scalar(visible_recipes(profile).where(Recipe.id == recipe_id))
@@ -71,6 +103,8 @@ def create_recipe(db: Session, profile: Profile, recipe_in: RecipeCreate) -> Rec
         cook_time=recipe_in.cook_time,
         servings=recipe_in.servings,
         owner_id=profile.id,  # Propriétaire = profil actif
+        visible_to_all=recipe_in.visible_to_all,
+        audience=_resolve_audience(db, profile, recipe_in.audience),
     )
     db.add(db_recipe)
     db.flush()
@@ -104,7 +138,14 @@ def update_recipe(
     if not can_edit(profile, db_recipe):
         raise RecipeEditForbidden("Seul l'auteur de la recette peut la modifier.")
 
-    for field, value in recipe_in.model_dump(exclude_unset=True).items():
+    changes = recipe_in.model_dump(exclude_unset=True)
+    # Audience résolue AVANT toute modification : un refus ne laisse rien à moitié fait.
+    if "audience" in changes:
+        db_recipe.audience = _resolve_audience(
+            db, profile, changes.pop("audience"), current=db_recipe.audience
+        )
+
+    for field, value in changes.items():
         # .model_dump(exclude_unset=True) permet de ne récupérer
         # que les champs qui ont été modifiés dans l'objet RecipeUpdate,
         # en excluant ceux qui n'ont pas été définis (unset).
