@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { createRecipe, getIngredients } from '../api/recipes'
+import { errorMessage } from '../api/client'
+import {
+  createRecipe,
+  getAudienceOptions,
+  getIngredients,
+  toApiAudience,
+} from '../api/recipes'
+import AudienceSelect from '../components/AudienceSelect'
 import styles from './RecipeForm.module.css'
 
 function RecipeCreate() {
@@ -17,20 +24,28 @@ function RecipeCreate() {
     { ingredient_name: '', quantity: '', unit: '' }
   ])
   const [allIngredients, setAllIngredients] = useState([])
+  // Audience : « Moi uniquement » pré-sélectionné (même règle que le serveur, mais AFFICHÉE).
+  const [audience, setAudience] = useState(['private'])
+  const [audienceGroups, setAudienceGroups] = useState([])
   const [error, setError] = useState(null)
 
-  // Charge tous les ingrédients existants au montage pour alimenter l'autocomplétion.
-  // Stratégie "fetch all + filtre local" : volume faible, une seule requête suffit.
+  // Au montage : les ingrédients (autocomplétion) et les groupes pour lesquels
+  // ce profil peut publier (fournis par le serveur). Deux requêtes indépendantes
+  // → lancées en parallèle avec Promise.all.
   useEffect(() => {
-    async function fetchIngredients() {
+    async function fetchData() {
       try {
-        const data = await getIngredients()
-        setAllIngredients(data)
+        const [ingredientsData, groupsData] = await Promise.all([
+          getIngredients(),
+          getAudienceOptions(),
+        ])
+        setAllIngredients(ingredientsData)
+        setAudienceGroups(groupsData)
       } catch (err) {
-        console.error('Impossible de charger les ingrédients', err)
+        console.error('Impossible de charger les données du formulaire', err)
       }
     }
-    fetchIngredients()
+    fetchData()
   }, [])
 
   function handleChange(e) {
@@ -76,12 +91,14 @@ function RecipeCreate() {
             ingredient_name: ing.ingredient_name.trim().toLowerCase(),
             quantity: ing.quantity ? parseFloat(ing.quantity) : null,
             unit: ing.unit.trim() || null
-          }))
+          })),
+        // Puces → { visible_to_all, audience } (traduction dans api/recipes.js).
+        ...toApiAudience(audience),
       }
       await createRecipe(data)
       navigate('/recipes')
     } catch (err) {
-      setError(err.message)
+      setError(errorMessage(err))
     }
   }
 
@@ -176,6 +193,16 @@ function RecipeCreate() {
         <div className={styles.field}>
           <label>Portions</label>
           <input type="number" name="servings" value={form.servings} onChange={handleChange} />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="audience">Visible par</label>
+          <AudienceSelect
+            id="audience"
+            value={audience}
+            onChange={setAudience}
+            groups={audienceGroups}
+          />
         </div>
 
         <button type="submit" className={styles.submitButton}>Enregistrer la recette</button>
