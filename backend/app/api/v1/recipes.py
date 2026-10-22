@@ -3,9 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.deps import CurrentProfile, DbSession, get_current_profile, require_password_changed
 from app.models.profile import Profile
 from app.models.recipe import Recipe
+from app.schemas.group import GroupRead
 from app.schemas.recipe import RecipeCreate, RecipeRead, RecipeUpdate
 from app.services import recipe_service
-from app.services.recipe_service import RecipeEditForbidden
+from app.services.group_service import GroupNotFound
+from app.services.recipe_service import AudienceForbidden, RecipeEditForbidden
 
 router = APIRouter(
     prefix="/recipes",
@@ -33,6 +35,13 @@ def list_recipes(
     return [_to_read(recipe, profile) for recipe in recipes]
 
 
+# ⚠️ Déclarée AVANT "/{recipe_id}" : sinon FastAPI tenterait de lire
+# "audience-options" comme un identifiant entier (→ 422).
+@router.get("/audience-options", response_model=list[GroupRead])
+def get_audience_options(db: DbSession, profile: CurrentProfile):
+    return recipe_service.audience_options(db, profile)
+
+
 @router.get("/{recipe_id}", response_model=RecipeRead)
 def get_recipe(db: DbSession, profile: CurrentProfile, recipe_id: int):
     db_recipe = recipe_service.get_recipe(db, profile, recipe_id)
@@ -49,15 +58,27 @@ def create_recipe(
     profile: CurrentProfile,
     recipe_in: RecipeCreate,
 ):
-    return _to_read(recipe_service.create_recipe(db, profile, recipe_in), profile)
+    try:
+        db_recipe = recipe_service.create_recipe(db, profile, recipe_in)
+    except AudienceForbidden as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
+    except GroupNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+        ) from None
+    return _to_read(db_recipe, profile)
 
 
 @router.patch("/{recipe_id}", response_model=RecipeRead)
 def update_recipe(db: DbSession, profile: CurrentProfile, recipe_id: int, recipe_in: RecipeUpdate):
     try:
         db_recipe = recipe_service.update_recipe(db, profile, recipe_id, recipe_in)
-    except RecipeEditForbidden as e:
+    except (RecipeEditForbidden, AudienceForbidden) as e:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
+    except GroupNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+        ) from None
 
     if db_recipe is None:
         raise HTTPException(
