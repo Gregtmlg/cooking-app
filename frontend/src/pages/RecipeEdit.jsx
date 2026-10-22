@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getRecipe, updateRecipe, getIngredients } from '../api/recipes'
+import { errorMessage } from '../api/client'
+import {
+  fromApiAudience,
+  getAudienceOptions,
+  getIngredients,
+  getRecipe,
+  toApiAudience,
+  updateRecipe,
+} from '../api/recipes'
+import AudienceSelect from '../components/AudienceSelect'
 import styles from './RecipeForm.module.css'
 
 function RecipeEdit() {
@@ -18,20 +27,32 @@ function RecipeEdit() {
     { ingredient_name: '', quantity: '', unit: '' }
   ])
   const [allIngredients, setAllIngredients] = useState([])
+  const [audience, setAudience] = useState([])
+  const [audienceGroups, setAudienceGroups] = useState([])
   const [loading, setLoading] = useState(true)
+  // Deux erreurs distinctes : celle du CHARGEMENT remplace la page (rien à éditer) ;
+  // celle de l'ENVOI s'affiche au-dessus du formulaire, sans perdre la saisie.
+  const [loadError, setLoadError] = useState(null)
   const [error, setError] = useState(null)
 
-  // Charge tous les ingrédients existants au montage pour alimenter l'autocomplétion.
-  // Stratégie "fetch all + filtre local" : volume faible, une seule requête suffit.
+  // Au montage : la recette, les ingrédients (autocomplétion) et les groupes
+  // pour lesquels ce profil peut publier.
   useEffect(() => {
   async function fetchData() {
     try {
-      // Les deux requêtes sont indépendantes : on les lance en parallèle avec Promise.all
+      // Les trois requêtes sont indépendantes : on les lance en parallèle avec Promise.all
       // pour réduire le temps de chargement (au lieu de les enchaîner l'une après l'autre).
-      const [recipeData, ingredientsData] = await Promise.all([
+      const [recipeData, ingredientsData, groupsData] = await Promise.all([
         getRecipe(id),
-        getIngredients()
+        getIngredients(),
+        getAudienceOptions(),
       ])
+      // Arrivé ici par l'URL sans en avoir le droit : le serveur refuserait l'envoi,
+      // inutile d'afficher un formulaire voué à l'échec.
+      if (!recipeData.can_edit) {
+        setLoadError("Vous ne pouvez pas modifier cette recette : seul son auteur le peut.")
+        return
+      }
       setForm({
         title: recipeData.title,
         description: recipeData.description ?? '',
@@ -52,8 +73,15 @@ function RecipeEdit() {
           : [{ ingredient_name: '', quantity: '', unit: '' }]
       )
       setAllIngredients(ingredientsData)
+      // API → puces.
+      setAudience(fromApiAudience(recipeData))
+      // Groupes affichables = ceux où l'on peut publier + ceux DÉJÀ sur la recette
+      // (un groupe quitté reste conservable, règle J4b). Map → pas de doublon par slug.
+      const groups = new Map(groupsData.map((group) => [group.slug, group]))
+      recipeData.audience.forEach((group) => groups.set(group.slug, group))
+      setAudienceGroups([...groups.values()])
     } catch (err) {
-      setError(err.message)
+      setLoadError(errorMessage(err, 'Impossible de charger la recette.'))
     } finally {
       setLoading(false)
     }
@@ -104,17 +132,19 @@ function RecipeEdit() {
             ingredient_name: ing.ingredient_name.trim().toLowerCase(),
             quantity: ing.quantity ? parseFloat(ing.quantity) : null,
             unit: ing.unit.trim() || null
-          }))
+          })),
+        // Toujours les DEUX champs d'audience (règle « tout ou rien » du PATCH).
+        ...toApiAudience(audience),
         }
         await updateRecipe(id, data)
         navigate(`/recipes/${id}`)
       } catch (err) {
-        setError(err.message)
+        setError(errorMessage(err))
       }
     }
 
   if (loading) return <p>Chargement...</p>
-  if (error) return <p>Erreur : {error}</p>
+  if (loadError) return <p>{loadError}</p>
 
   return (
     <div>
@@ -205,6 +235,16 @@ function RecipeEdit() {
         <div className={styles.field}>
           <label>Portions</label>
           <input type="number" name="servings" value={form.servings} onChange={handleChange} />
+        </div>
+
+        <div className={styles.field}>
+          <label htmlFor="audience">Visible par</label>
+          <AudienceSelect
+            id="audience"
+            value={audience}
+            onChange={setAudience}
+            groups={audienceGroups}
+          />
         </div>
 
         <button type="submit" className={styles.submitButton}>Enregistrer la recette</button>

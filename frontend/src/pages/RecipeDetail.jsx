@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
+import { errorMessage } from '../api/client'
 import { getRecipe, deleteRecipe } from '../api/recipes'
 import styles from './RecipeDetail.module.css'
 
@@ -8,6 +9,13 @@ import styles from './RecipeDetail.module.css'
 function capitalize(str) {
   if (!str) return ''
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+// Phrase « Visible par … » à partir de la recette renvoyée par l'API.
+function audienceLabel(recipe) {
+  if (recipe.visible_to_all) return 'Tous'
+  if (recipe.audience.length === 0) return 'Son auteur uniquement'
+  return recipe.audience.map((group) => group.name).join(', ')
 }
 
 function RecipeDetail() {
@@ -23,7 +31,7 @@ function RecipeDetail() {
         const data = await getRecipe(id)
         setRecipe(data)
       } catch (err) {
-        setError(err.message)
+        setError(errorMessage(err))
       } finally {
         setLoading(false)
       }
@@ -42,7 +50,7 @@ function RecipeDetail() {
         await deleteRecipe(id)
         navigate('/recipes')
       } catch (err) {
-        setError(err.message)
+        setError(errorMessage(err))
       }
     }
   }
@@ -59,6 +67,8 @@ function RecipeDetail() {
           {recipe.cook_time && <span>Cuisson : {recipe.cook_time} min</span>}
           {recipe.servings && <span>{recipe.servings} personnes</span>}
         </div>
+
+        <p className={styles.audience}>Visible par : {audienceLabel(recipe)}</p>
 
         <h3 className={styles.sectionTitle}>Ingrédients</h3>
         {recipe.ingredients.length === 0 ? (
@@ -83,10 +93,13 @@ function RecipeDetail() {
         <h3 className={styles.sectionTitle}>Instructions</h3>
         <p className={styles.instructions}>{recipe.instructions}</p>
 
-        <div className={styles.actions}>
-          <Link to={`/recipes/${id}/edit`} className={styles.editButton}>Modifier</Link>
-          <button onClick={handleDelete} className={styles.deleteButton}>Supprimer</button>
-        </div>
+        {/* Droits calculés par le SERVEUR (can_edit) : le front n'en recalcule aucun. */}
+        {recipe.can_edit && (
+          <div className={styles.actions}>
+            <Link to={`/recipes/${id}/edit`} className={styles.editButton}>Modifier</Link>
+            <button onClick={handleDelete} className={styles.deleteButton}>Supprimer</button>
+          </div>
+        )}
       </div>
     </div>
   )

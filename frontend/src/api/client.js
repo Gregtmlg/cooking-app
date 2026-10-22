@@ -54,3 +54,12 @@ api.interceptors.response.use(
 )
 
 export default api
+// Message lisible pour l'utilisateur à partir d'une erreur Axios.
+// Le backend renvoie `detail` sous forme de TEXTE pour ses erreurs métier
+// (403 « Vous ne pouvez pas publier pour… », 404, 422 groupe inconnu).
+// Les 422 de validation Pydantic renvoient une LISTE d'objets, et les 403 d'état
+// un objet {code, message} (gérés par l'intercepteur) → message générique.
+export function errorMessage(err, fallback = 'Une erreur est survenue. Réessayez.') {
+  const detail = err.response?.data?.detail
+  return typeof detail === 'string' ? detail : fallback
+}
