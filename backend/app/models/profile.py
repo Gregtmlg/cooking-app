@@ -27,3 +27,9 @@ class Profile(Base):
     groups: Mapped[list["Group"]] = relationship(
         "Group", secondary=profile_groups, back_populates="profiles"
     )
+    # Thème choisi par le profil (multi-groupes). None → défaut (cf. theme_for).
+    # FK NOMMÉE : obligatoire en batch mode SQLite (leçon J2a).
+    theme_group_id: Mapped[int | None] = mapped_column(
+        ForeignKey("groups.id", name="fk_profiles_theme_group_id_groups"), nullable=True
+    )
+    theme_group: Mapped["Group | None"] = relationship("Group", foreign_keys=[theme_group_id])

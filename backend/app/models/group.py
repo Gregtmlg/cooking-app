@@ -15,7 +15,10 @@ class Group(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     slug: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
+    # Clé de thème lue par le CSS ([data-theme="…"]) ; None → palette neutre.
     theme: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    # Libellé de marque (« Dingé Kitchen »…) : une DONNÉE du groupe, jamais du CSS.
+    brand_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     profiles: Mapped[list["Profile"]] = relationship(
         "Profile", secondary=profile_groups, back_populates="groups"
     )

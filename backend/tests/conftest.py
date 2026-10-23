@@ -133,8 +133,8 @@ def world(db_session):
     """Deux groupes, six profils, quatre recettes — un petit monde complet."""
     from app.services.account_service import create_account
 
-    famille = Group(slug="famille", name="Famille")
-    chuteam = Group(slug="chuteam", name="ChuTeam")
+    famille = Group(slug="famille", name="Famille", theme="famille", brand_name="Dingé Kitchen")
+    chuteam = Group(slug="chuteam", name="ChuTeam", theme="chuteam", brand_name="KitChuTeam")
     db_session.add_all([famille, chuteam])
     db_session.commit()
 

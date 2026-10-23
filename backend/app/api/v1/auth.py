@@ -1,8 +1,16 @@
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 
-from app.api.deps import SESSION_COOKIE_NAME, CurrentAccount, CurrentSession, DbSession
+from app.api.deps import (
+    SESSION_COOKIE_NAME,
+    CurrentAccount,
+    CurrentProfile,
+    CurrentSession,
+    DbSession,
+)
 from app.core.config import settings
 from app.core.rate_limit import rate_limit_login
+from app.models.account import Account
+from app.models.profile import Profile
 from app.schemas.auth import (
     AccountRead,
     ChangePasswordRequest,
@@ -10,14 +18,17 @@ from app.schemas.auth import (
     ProfileRead,
     SelectProfileRequest,
     SessionRead,
+    ThemeChoice,
+    ThemeRead,
 )
-from app.services import account_service, profile_service, session_service
+from app.services import account_service, group_service, profile_service, session_service
 from app.services.account_service import (
     InvalidPassword,
     MultiProfileChangeForbidden,
     PasswordChangeNotRequired,
     WrongPassword,
 )
+from app.services.group_service import GroupNotFound, NotInGroup
 from app.services.profile_service import ProfileNotFound
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -37,6 +48,19 @@ def _set_session_cookie(response: Response, token: str) -> None:
     )
 
 
+def _session_read(account: Account, profile: Profile | None) -> SessionRead:
+    """L'état complet de la session, thème compris (calculé par theme_for)."""
+    if profile is None:
+        return SessionRead(account=account, profile=None)
+    theme = group_service.theme_for(profile)
+    return SessionRead(
+        account=account,
+        profile=profile,
+        theme=ThemeRead.from_group(theme) if theme else None,
+        theme_options=[ThemeRead.from_group(g) for g in group_service.theme_options(profile)],
+    )
+
+
 @router.post("/login", response_model=SessionRead, dependencies=[Depends(rate_limit_login)])
 def login(credentials: LoginRequest, db: DbSession, response: Response):
     account = account_service.authenticate(db, credentials.username, credentials.password)
@@ -51,7 +75,7 @@ def login(credentials: LoginRequest, db: DbSession, response: Response):
         db, account.id, profile_id=profile.id if profile else None
     )
     _set_session_cookie(response, token)
-    return {"account": account, "profile": profile}
+    return _session_read(account, profile)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -67,7 +91,21 @@ def logout(
 
 @router.get("/me", response_model=SessionRead)
 def me(auth_session: CurrentSession):
-    return auth_session
+    return _session_read(auth_session.account, auth_session.profile)
+
+
+@router.put("/theme", response_model=SessionRead)
+def choose_theme(payload: ThemeChoice, profile: CurrentProfile, db: DbSession):
+    """Choisit le thème du profil actif parmi ses groupes (None → défaut)."""
+    try:
+        group_service.set_theme(db, profile, payload.group)
+    except NotInGroup as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
+    except GroupNotFound as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(e)
+        ) from None
+    return _session_read(profile.account, profile)
 
 
 @router.get("/profiles", response_model=list[ProfileRead])
