@@ -17,7 +17,7 @@
   flex-direction: column;
   gap: var(--space-lg);
   padding: var(--space-2xl) var(--space-xl);
-  background-color: #fff;
+  background-color: var(--color-surface);
   border: 0.5px solid var(--color-border);
   border-radius: var(--radius-lg);
 }

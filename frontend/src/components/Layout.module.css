@@ -20,7 +20,7 @@
 }
 
 .navLink {
-    color:  #C4957A;
+    color:  var(--color-header-link);
     font-size: 0.95rem;
     transition: color 0.2s;
 }
@@ -50,8 +50,8 @@
   font: inherit;
   font-size: 0.9rem;
   background: transparent;
-  color: #C4957A;
-  border: 0.5px solid #C4957A;
+  color: var(--color-header-link);
+  border: 0.5px solid var(--color-header-link);
   border-radius: var(--radius-sm);
   padding: 0.3rem 0.75rem;
   cursor: pointer;
@@ -61,4 +61,18 @@
 .logoutButton:hover {
   color: var(--color-light);
   border-color: var(--color-light);
+}
+.themeLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--color-header-link);
+  font-size: 0.9rem;
+}
+
+.themeSelect {
+  width: auto;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
 }
