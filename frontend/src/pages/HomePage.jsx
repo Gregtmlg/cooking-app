@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import KitchenSketch from '../components/KitchenSketch.jsx'
+import { useAuth } from '../auth/AuthContext'
+import { brandOf } from '../theme/theme'
 import styles from './HomePage.module.css'
 
 const navItems = [
@@ -10,11 +12,12 @@ const navItems = [
 
 
 function HomePage() {
+  const { theme } = useAuth()
   return (
     <div className={styles.hub}>
         <KitchenSketch />
         <div className={styles.content}>
-            <h1 className={styles.brand}>Dingé Kitchen</h1>
+            <h1 className={styles.brand}>{brandOf(theme)}</h1>
             <nav className={styles.menu}>
                 {navItems.map((item) =>
                     item.available ? (

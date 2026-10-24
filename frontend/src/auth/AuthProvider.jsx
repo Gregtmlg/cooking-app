@@ -5,19 +5,32 @@ import { useCallback, useEffect, useState } from 'react'
 import { AuthContext } from './AuthContext'
 import * as authApi from '../api/auth'
 import { setAuthStateChangedHandler } from '../api/client'
+import { applyTheme } from '../theme/theme'
 
-const ANONYMOUS = { status: 'anonymous', account: null, profile: null }
+const ANONYMOUS = {
+  status: 'anonymous',
+  account: null,
+  profile: null,
+  theme: null,
+  themeOptions: [],
+}
 
 // Traduit une réponse SessionRead du backend en état du contexte.
 // Fonction pure, hors du composant : utilisée par le chargement initial ET par refresh.
 function authenticated(session) {
-  return { status: 'authenticated', account: session.account, profile: session.profile }
+  return {
+    status: 'authenticated',
+    account: session.account,
+    profile: session.profile,
+    theme: session.theme, // décidé par le serveur (theme_for) ; null = neutre
+    themeOptions: session.theme_options, // ≥ 2 → sélecteur dans l'en-tête
+  }
 }
 
 export default function AuthProvider({ children }) {
   // 'loading' tant que /me n'a pas répondu : évite de rediriger vers /login
   // un utilisateur dont le cookie est en cours de vérification.
-  const [state, setState] = useState({ status: 'loading', account: null, profile: null })
+  const [state, setState] = useState({ ...ANONYMOUS, status: 'loading' })
 
   // Chargement initial : une fois, au montage.
   // setState n'est appelé que dans les callbacks .then/.catch (quand le réseau répond),
@@ -49,6 +62,13 @@ export default function AuthProvider({ children }) {
     }
   }, [])
 
+  // Le thème suit l'état : à chaque changement de clé, on pose (ou retire) data-theme.
+  // Effet = synchronisation avec un système EXTÉRIEUR à React (le DOM de <html>).
+  const themeKey = state.theme?.key ?? null
+  useEffect(() => {
+    applyTheme(themeKey)
+  }, [themeKey])
+
     // Abonnement de l'intercepteur Axios : on lui confie refresh.
     // Nettoyage : si le provider disparaît, on vide la boîte aux lettres.
   useEffect(() => {
@@ -70,8 +90,13 @@ export default function AuthProvider({ children }) {
   }
 
   async function selectProfile(profileId) {
-    const profile = await authApi.selectProfile(profileId)
-    setState((prev) => ({ ...prev, profile }))
+    await authApi.selectProfile(profileId)
+    // Le thème dépend du profil : on relit l'état complet de la session.
+    setState(authenticated(await authApi.getMe()))
+  }
+
+  async function chooseTheme(groupSlug) {
+    setState(authenticated(await authApi.setTheme(groupSlug)))
   }
 
   async function changePassword(oldPassword, newPassword) {
@@ -79,6 +104,6 @@ export default function AuthProvider({ children }) {
     setState((prev) => ({ ...prev, account })) // must_change_password repasse à false
   }
 
-  const value = { ...state, login, logout, selectProfile, changePassword, refresh }
+  const value = { ...state, login, logout, selectProfile, changePassword, chooseTheme, refresh }
   return <AuthContext value={value}>{children}</AuthContext>
 }

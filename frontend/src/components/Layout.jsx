@@ -1,22 +1,25 @@
 import { Link, Outlet } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { brandOf } from '../theme/theme'
+import ThemeSelect from './ThemeSelect'
 import styles from './Layout.module.css'
 
 function Layout() {
   // Layout est sous RequireProfile : profile n'est jamais null ici.
-  const { profile, logout } = useAuth()
+  const { profile, theme, logout } = useAuth()
 
   return (
     <div>
       <header className={styles.header}>
         <h1 className={styles.logo}>
-          <Link to="/">Dingé Kitchen</Link>
+          <Link to="/">{brandOf(theme)}</Link>
         </h1>
         <nav className={styles.nav}>
           <Link className={styles.navLink} to="/recipes">Recettes</Link>
           <Link className={styles.navLink} to="/recipes/new">Créer une recette</Link>
         </nav>
         <div className={styles.session}>
+          <ThemeSelect />
           <Link className={styles.navLink} to="/select-profile">Changer de profil</Link>
           <span className={styles.profileName}>{profile.display_name}</span>
           <button className={styles.logoutButton} type="button" onClick={logout}>

@@ -2,17 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap');
 
 /* ── Variables ── */
+/* Tokens NON thémés (typographie, espacements, rayons) : communs à tous les thèmes. */
 :root {
-  /* Couleurs */
-  --color-dark:       #3D2B1F;
-  --color-accent:     #C4502A;
-  --color-mid:        #E8C4A0;
-  --color-light:      #FAE8D8;
-  --color-background: #FDF6F0;
-  --color-text:       #3D2B1F;
-  --color-text-muted: #9A6E55;
-  --color-border:     #E2C4A8;
-
   /* Typographie */
   --font-serif: 'DM Serif Display', serif;
   --font-sans:  'DM Sans', sans-serif;
@@ -29,6 +20,54 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
+}
+
+/* ── Thèmes (J6b) ──
+   Une seule application, des PALETTES. Le thème actif est posé sur <html data-theme="…">
+   à partir de session.theme.key (décidé par le serveur). Sans attribut : thème neutre.
+   Tous les CSS Modules lisent var(--color-…) : ils suivent sans modification.
+   Palettes « neutre » et « chuteam » PROVISOIRES (en attente des graphistes). */
+
+/* Neutre — « Ardoise » (sans groupe, admin, pages de connexion) */
+:root {
+  --color-dark:        #2F3A40;
+  --color-accent:      #3F6F7E;
+  --color-mid:         #C9D6DA;
+  --color-light:       #EAF0F1;
+  --color-background:  #F6F8F8;
+  --color-surface:     #FFFFFF;
+  --color-text:        #2F3A40;
+  --color-text-muted:  #6B7F86;
+  --color-border:      #D3DEE1;
+  --color-header-link: #9FB6BD;
+}
+
+/* Famille — « Terre & chaleur » (Dingé Kitchen) */
+[data-theme="famille"] {
+  --color-dark:        #3D2B1F;
+  --color-accent:      #C4502A;
+  --color-mid:         #E8C4A0;
+  --color-light:       #FAE8D8;
+  --color-background:  #FDF6F0;
+  --color-surface:     #FFFFFF;
+  --color-text:        #3D2B1F;
+  --color-text-muted:  #9A6E55;
+  --color-border:      #E2C4A8;
+  --color-header-link: #C4957A;
+}
+
+/* ChuTeam — « Aubergine » (KitChuTeam) */
+[data-theme="chuteam"] {
+  --color-dark:        #2B1B3D;
+  --color-accent:      #6D3FC0;
+  --color-mid:         #D9C8F2;
+  --color-light:       #F1EAFB;
+  --color-background:  #FAF7FD;
+  --color-surface:     #FFFFFF;
+  --color-text:        #2B1B3D;
+  --color-text-muted:  #7D6A99;
+  --color-border:      #E0D3F2;
+  --color-header-link: #B79BE0;
 }
 
 /* ── Reset ── */
@@ -69,7 +108,7 @@ input, textarea, select {
   padding: 0.6rem 0.75rem;
   border: 0.5px solid var(--color-border);
   border-radius: var(--radius-md);
-  background-color: #fff;
+  background-color: var(--color-surface);
   color: var(--color-text);
   width: 100%;
 }

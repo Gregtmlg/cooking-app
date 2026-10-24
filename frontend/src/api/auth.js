@@ -37,3 +37,9 @@ export async function changePassword(oldPassword, newPassword) {
     })
     return response.data
 }
+// group : slug du groupe choisi, ou null pour revenir au thème par défaut.
+// Renvoie le NOUVEL état de session (thème compris).
+export async function setTheme(group) {
+    const response = await api.put('/api/v1/auth/theme', { group })
+    return response.data
+}
