@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { AuthContext } from './AuthContext'
 import * as authApi from '../api/auth'
 import { setAuthStateChangedHandler } from '../api/client'
-import { applyTheme } from '../theme/theme'
+import { applyTheme, brandOf } from '../theme/theme'
 
 const ANONYMOUS = {
   status: 'anonymous',
@@ -69,8 +69,14 @@ export default function AuthProvider({ children }) {
     applyTheme(themeKey)
   }, [themeKey])
 
-    // Abonnement de l'intercepteur Axios : on lui confie refresh.
-    // Nettoyage : si le provider disparaît, on vide la boîte aux lettres.
+  // Le titre de l'onglet suit la marque (neutre si aucun thème) — même source que l'en-tête.
+  const brand = brandOf(state.theme)
+  useEffect(() => {
+    document.title = brand
+  }, [brand])
+
+  // Abonnement de l'intercepteur Axios : on lui confie refresh.
+  // Nettoyage : si le provider disparaît, on vide la boîte aux lettres.
   useEffect(() => {
     setAuthStateChangedHandler(refresh)
     return () => setAuthStateChangedHandler(null)
