@@ -12,8 +12,12 @@ services:
 
   frontend:
     image: ghcr.io/gregtmlg/cooking-app-frontend:${TAG:-main}
+    # Boucle locale UNIQUEMENT : seul cloudflared (sur l'hôte) doit joindre Nginx.
+    # Sinon, un client du réseau local / Tailscale pourrait forger CF-Connecting-IP
+    # et contourner le rate-limiting du login. Docker contourne ufw : seule cette
+    # liaison garantit la fermeture.
     ports:
-      - "80:80"
+      - "127.0.0.1:80:80"
     depends_on:
       - backend
     restart: unless-stopped
