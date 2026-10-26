@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.identifiers import username_key
 from app.models.account import Account
 from app.models.profile import Profile
 from app.models.session import AuthSession
@@ -46,7 +47,7 @@ def find_profile(db: Session, username: str, display_name: str | None = None) ->
 
     `display_name` peut être omis quand le compte n'a qu'un profil.
     """
-    account = db.scalar(select(Account).where(Account.username == username))
+    account = db.scalar(select(Account).where(Account.username_key == username_key(username)))
     if account is None:
         raise ProfileNotFound(f"Le compte {username} n'existe pas.")
 
