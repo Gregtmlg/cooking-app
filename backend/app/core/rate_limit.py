@@ -14,7 +14,9 @@ _attempts: dict[str, list[float]] = defaultdict(list)
 
 def client_ip(request: Request) -> str:
     """Retourne l'IP du client, ou une chaîne vide si introuvable."""
-    return request.headers.get("CF-Connecting-IP") or (request.client.host if request.client else "")
+    return request.headers.get("CF-Connecting-IP") or (
+        request.client.host if request.client else ""
+    )
 
 
 def rate_limit_login(request: Request) -> None:
