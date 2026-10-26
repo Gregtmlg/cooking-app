@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     # True par défaut (prod) ; surchargé à False en dev via .env si le cookie
     # ne se pose pas sur http://localhost.
     session_cookie_secure: bool = True
+    log_level: str = "INFO"
 
 
 settings = Settings()
