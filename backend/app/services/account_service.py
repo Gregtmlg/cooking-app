@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.identifiers import username_key
 from app.core.security import hash_password, needs_rehash, verify_dummy, verify_password
 from app.models.account import Account
 from app.models.profile import Profile
@@ -52,7 +53,7 @@ def create_account(
 
     _validate_password_length(password)
 
-    if db.scalar(select(Account).where(Account.username == username)) is not None:
+    if db.scalar(select(Account).where(Account.username_key == username_key(username))) is not None:
         raise UsernameAlreadyExists(f"L'identifiant '{username}' est déjà pris.")
 
     # Sans groupe : utilisateur « lambda ». Validé AVANT tout calcul coûteux.
@@ -81,7 +82,7 @@ def create_account(
 def reset_password(db: Session, username: str, new_password: str) -> Account:
     _validate_password_length(new_password)
 
-    account = db.scalar(select(Account).where(Account.username == username))
+    account = db.scalar(select(Account).where(Account.username_key == username_key(username)))
     if account is None:
         raise AccountNotFound(f"Le compte '{username}' n'existe pas.")
 
@@ -119,7 +120,7 @@ def change_password(db: Session, account: Account, old_password: str, new_passwo
 
 
 def authenticate(db: Session, username: str, password: str) -> Account | None:
-    account = db.scalar(select(Account).where(Account.username == username))
+    account = db.scalar(select(Account).where(Account.username_key == username_key(username)))
     if account is None:
         # Vérification factice pour éviter de révéler l'existence d'un identifiant
         # (anti-timing)
