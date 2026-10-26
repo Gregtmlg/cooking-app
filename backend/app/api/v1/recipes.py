@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.deps import CurrentProfile, DbSession, get_current_profile, require_password_changed
@@ -8,6 +10,8 @@ from app.schemas.recipe import RecipeCreate, RecipeRead, RecipeUpdate
 from app.services import recipe_service
 from app.services.group_service import GroupNotFound
 from app.services.recipe_service import AudienceForbidden, RecipeEditForbidden
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/recipes",
@@ -61,6 +65,9 @@ def create_recipe(
     try:
         db_recipe = recipe_service.create_recipe(db, profile, recipe_in)
     except AudienceForbidden as e:
+        logger.warning(
+            "recipe.audience_forbidden", extra={"profile_id": profile.id, "reason": str(e)}
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     except GroupNotFound as e:
         raise HTTPException(
@@ -73,7 +80,17 @@ def create_recipe(
 def update_recipe(db: DbSession, profile: CurrentProfile, recipe_id: int, recipe_in: RecipeUpdate):
     try:
         db_recipe = recipe_service.update_recipe(db, profile, recipe_id, recipe_in)
-    except (RecipeEditForbidden, AudienceForbidden) as e:
+    except AudienceForbidden as e:
+        logger.warning(
+            "recipe.audience_forbidden",
+            extra={"profile_id": profile.id, "recipe_id": recipe_id, "reason": str(e)},
+        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
+    except RecipeEditForbidden as e:
+        logger.warning(
+            "recipe.edit_forbidden",
+            extra={"profile_id": profile.id, "recipe_id": recipe_id, "reason": str(e)},
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
     except GroupNotFound as e:
         raise HTTPException(
@@ -92,6 +109,9 @@ def delete_recipe(db: DbSession, profile: CurrentProfile, recipe_id: int):
     try:
         db_recipe = recipe_service.delete_recipe(db, profile, recipe_id)
     except RecipeEditForbidden as e:
+        logger.warning(
+            "recipe.edit_forbidden", extra={"profile_id": profile.id, "recipe_id": recipe_id}
+        )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e)) from None
 
     if db_recipe is None:

@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
+import logging
+
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 
 from app.api.deps import (
     SESSION_COOKIE_NAME,
@@ -8,7 +10,7 @@ from app.api.deps import (
     DbSession,
 )
 from app.core.config import settings
-from app.core.rate_limit import rate_limit_login
+from app.core.rate_limit import client_ip, rate_limit_login
 from app.models.account import Account
 from app.models.profile import Profile
 from app.schemas.auth import (
@@ -31,6 +33,8 @@ from app.services.account_service import (
 from app.services.group_service import GroupNotFound, NotInGroup
 from app.services.profile_service import ProfileNotFound
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 SESSION_MAX_AGE = 14 * 24 * 60 * 60  # 14 jours, en secondes — aligné sur SESSION_LIFETIME
@@ -51,20 +55,23 @@ def _set_session_cookie(response: Response, token: str) -> None:
 def _session_read(account: Account, profile: Profile | None) -> SessionRead:
     """L'état complet de la session, thème compris (calculé par theme_for)."""
     if profile is None:
-        return SessionRead(account=account, profile=None) # type: ignore
+        return SessionRead(account=account, profile=None)  # type: ignore
     theme = group_service.theme_for(profile)
     return SessionRead(
-        account=account, # type: ignore
-        profile=profile, # type: ignore
+        account=account,  # type: ignore
+        profile=profile,  # type: ignore
         theme=ThemeRead.from_group(theme) if theme else None,
         theme_options=[ThemeRead.from_group(g) for g in group_service.theme_options(profile)],
     )
 
 
 @router.post("/login", response_model=SessionRead, dependencies=[Depends(rate_limit_login)])
-def login(credentials: LoginRequest, db: DbSession, response: Response):
+def login(credentials: LoginRequest, db: DbSession, response: Response, request: Request):
     account = account_service.authenticate(db, credentials.username, credentials.password)
     if account is None:
+        logger.warning(
+            "auth.login_failed", extra={"username": credentials.username, "ip": client_ip(request)}
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Identifiant ou mot de passe incorrect.",
@@ -75,6 +82,10 @@ def login(credentials: LoginRequest, db: DbSession, response: Response):
         db, account.id, profile_id=profile.id if profile else None
     )
     _set_session_cookie(response, token)
+    logger.info(
+        "auth.login_succeeded",
+        extra={"username": account.username, "account_id": account.id, "ip": client_ip(request)},
+    )
     return _session_read(account, profile)
 
 

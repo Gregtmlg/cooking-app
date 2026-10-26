@@ -5,6 +5,9 @@ from app.api.v1 import auth as auth_router
 from app.api.v1 import ingredients as ingredients_router
 from app.api.v1 import recipes as recipes_router
 from app.core.config import settings
+from app.core.logging import configure_logging
+
+configure_logging(settings.log_level)
 
 app = FastAPI(
     title=settings.app_name,
