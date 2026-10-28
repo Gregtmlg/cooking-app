@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1 import admin as admin_router
 from app.api.v1 import auth as auth_router
 from app.api.v1 import ingredients as ingredients_router
 from app.api.v1 import recipes as recipes_router
@@ -43,3 +44,5 @@ app.include_router(
     auth_router.router,
     prefix="/api/v1",
 )
+
+app.include_router(admin_router.router, prefix="/api/v1")

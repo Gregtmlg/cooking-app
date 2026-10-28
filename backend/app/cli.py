@@ -11,6 +11,7 @@ from app.services.group_service import (
     add_profile_to_group,
     remove_profile_from_group,
 )
+from app.services.inventory_service import get_inventory
 from app.services.profile_service import ProfileServiceError, find_profile
 
 cli = typer.Typer(
@@ -147,6 +148,35 @@ def remove_from_group_cmd(
 
     finally:
         db.close()
+
+
+@cli.command("inventory")
+def inventory_cmd():
+    """Affiche comptes, profils, groupes, thèmes et sessions actives (lecture seule)."""
+    db = SessionLocal()
+    try:
+        inv = get_inventory(db)
+    finally:
+        db.close()
+
+    typer.secho("Comptes", bold=True)
+    for a in inv.accounts:
+        flags = [
+            label
+            for label, on in (("admin", a.is_admin), ("mdp provisoire", a.must_change_password))
+            if on
+        ]
+        suffix = f" [{', '.join(flags)}]" if flags else ""
+        typer.echo(f"  #{a.id} {a.username}{suffix} — {a.active_sessions} session(s) active(s)")
+        for p in a.profiles:
+            groups = ", ".join(p.groups) or "sans groupe"
+            typer.echo(
+                f"      · {p.display_name} (#{p.id}) — {groups} — thème : {p.theme or 'neutre'}"
+            )
+
+    typer.secho("Groupes", bold=True)
+    for g in inv.groups:
+        typer.echo(f"  {g.slug} ({g.name}) — {g.members} membre(s)")
 
 
 if __name__ == "__main__":
