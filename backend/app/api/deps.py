@@ -72,3 +72,14 @@ def require_password_changed(account: CurrentAccount) -> Account:
 
 
 PasswordChanged = Annotated[Account, Depends(require_password_changed)]
+
+
+def require_admin(account: PasswordChanged) -> Account:
+    if not account.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Accès réservé à l'administrateur."
+        )
+    return account
+
+
+AdminAccount = Annotated[Account, Depends(require_admin)]

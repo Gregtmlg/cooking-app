@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
+from app.models.account import Account
 from app.models.session import AuthSession
 
 SESSION_LIFETIME = timedelta(days=14)
@@ -60,3 +61,9 @@ def delete_account_session(db: Session, account_id: int) -> None:
     """Révoque toutes les sessions d'un compte. Ne commite pas : l'appelant décide."""
 
     db.execute(delete(AuthSession).where(AuthSession.account_id == account_id))
+
+
+def active_session_count(account: Account) -> int:
+    """Nombre de sessions non expirées du compte (lecture seule : ne nettoie rien)."""
+    active_sessions = sum(1 for s in account.sessions if s.expires_at >= _utcnow())
+    return active_sessions
