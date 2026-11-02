@@ -1,5 +1,3 @@
-import pytest
-
 from app.api.deps import PASSWORD_CHANGE_REQUIRED
 from app.services.account_service import create_account
 
