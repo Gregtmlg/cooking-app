@@ -3,6 +3,7 @@ import typer
 from app.db.session import SessionLocal
 from app.services.account_service import (
     AccountServiceError,
+    add_profile,
     create_account,
     reset_password,
 )
@@ -177,6 +178,29 @@ def inventory_cmd():
     typer.secho("Groupes", bold=True)
     for g in inv.groups:
         typer.echo(f"  {g.slug} ({g.name}) — {g.members} membre(s)")
+
+
+@cli.command("add-profile")
+def add_profile_cmd(
+    username: str = typer.Option(..., help="Identifiant du compte qui reçoit le profil."),
+    display_name: str = typer.Option(..., help="Nom affiché du nouveau profil."),
+    group: str | None = typer.Option(None, help="Slug du groupe. Omis : profil sans groupe."),
+):
+    """Ajoute un profil à un compte existant (refusé si mot de passe encore provisoire)."""
+    db = SessionLocal()
+    try:
+        profile = add_profile(db, username=username, display_name=display_name, group_slug=group)
+        group_label = f"groupe « {group} »" if group else "sans groupe"
+        typer.secho(
+            f"✓ Profil « {profile.display_name} » ajouté au compte "
+            f"« {profile.account.username} » ({group_label}).",
+            fg=typer.colors.GREEN,
+        )
+    except (AccountServiceError, GroupServiceError) as e:
+        typer.secho(f"✗ {e}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from None
+    finally:
+        db.close()
 
 
 if __name__ == "__main__":

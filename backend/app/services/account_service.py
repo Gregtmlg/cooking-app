@@ -34,6 +34,15 @@ class WrongPassword(AccountServiceError): ...
 class PasswordChangeNotRequired(AccountServiceError): ...
 
 
+class ProvisionalPasswordPending(AccountServiceError): ...
+
+
+class InvalidProfileName(AccountServiceError): ...
+
+
+class ProfileNameTaken(AccountServiceError): ...
+
+
 def _validate_password_length(password: str) -> None:
     if not (MIN_PASSWORD_LENGTH <= len(password) <= MAX_PASSWORD_LENGTH):
         raise InvalidPassword(
@@ -137,3 +146,40 @@ def authenticate(db: Session, username: str, password: str) -> Account | None:
         db.refresh(account)
 
     return account
+
+
+def add_profile(
+    db: Session, username: str, display_name: str, group_slug: str | None = None
+) -> Profile:
+    """Ajoute un profil à un compte existant (le rend multi-profils).
+
+    INVARIANT préservé : must_change_password ⇒ mono-profil. Un compte encore en
+    mot de passe provisoire est REFUSÉ : son titulaire doit d'abord poser son mot
+    de passe définitif (sinon : changement interdit car multi-profils → impasse).
+    """
+    account = db.scalar(select(Account).where(Account.username_key == username_key(username)))
+    if account is None:
+        raise AccountNotFound(f"Le compte '{username}' n'existe pas.")
+
+    if account.must_change_password:
+        raise ProvisionalPasswordPending(
+            f"Le compte '{account.username}' a encore un mot de passe provisoire : "
+            "il doit d'abord être changé à la connexion."
+        )
+
+    name = display_name.strip()
+    if not name:
+        raise InvalidProfileName("Le nom du profil ne peut pas être vide.")
+    if any(p.display_name.casefold() == name.casefold() for p in account.profiles):
+        raise ProfileNameTaken(f"Le compte '{account.username}' a déjà un profil « {name} ».")
+
+    group = get_group_by_slug(db, group_slug) if group_slug is not None else None
+
+    profile = Profile(display_name=name)
+    if group is not None:
+        profile.groups.append(group)
+    account.profiles.append(profile)
+
+    db.commit()
+    db.refresh(profile)
+    return profile
