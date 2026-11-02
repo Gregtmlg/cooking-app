@@ -95,8 +95,7 @@ def another_account(db_session, chuteam_group):
 
 @pytest.fixture
 def multi_profile_account(db_session, chuteam_group):
-    from app.models.profile import Profile
-    from app.services.account_service import create_account
+    from app.services.account_service import add_profile, create_account
 
     account = create_account(
         db_session,
@@ -106,11 +105,10 @@ def multi_profile_account(db_session, chuteam_group):
         display_name="Michel",
     )
 
-    # Second profil ajouté directement
-    jeanne = Profile(display_name="Jeanne", account_id=account.id)
-    jeanne.groups.append(chuteam_group)
-    db_session.add(jeanne)
+    # Invariant : un compte ne devient multi-profils qu'avec un mot de passe définitif.
+    account.must_change_password = False
     db_session.commit()
+    add_profile(db_session, username="Famille", display_name="Jeanne", group_slug="chuteam")
     db_session.refresh(account)
     return account
 

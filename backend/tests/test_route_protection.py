@@ -34,8 +34,12 @@ def test_profile_required(client, db_session, multi_profile_account, url):
     assert response.json()["detail"]["code"] == PROFILE_REQUIRED
 
 
-def test_password_checked_before_profile(client, multi_profile_account):
+def test_password_checked_before_profile(client, db_session, multi_profile_account):
     # Mot de passe provisoire ET aucun profil sélectionné : le mot de passe gagne.
+    # État INTERDIT par les services (invariant must_change ⇒ mono-profil) : on le
+    # fabrique à la main pour vérifier l'ordre des gardes même si l'invariant cédait.
+    multi_profile_account.must_change_password = True
+    db_session.commit()
     login(client, "Famille")
     response = client.get("/api/v1/recipes/")
     assert response.status_code == 403
