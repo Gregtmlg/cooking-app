@@ -6,18 +6,6 @@ from app.services.account_service import create_account
 INVENTORY_URL = "/api/v1/admin/inventory"
 
 
-@pytest.fixture
-def admin_client(client, db_session):
-    admin = create_account(db_session, username="Admin", password="motdepasse123", is_admin=True)
-    admin.must_change_password = False
-    db_session.commit()
-    response = client.post(
-        "/api/v1/auth/login", json={"username": "Admin", "password": "motdepasse123"}
-    )
-    assert response.status_code == 200
-    return client
-
-
 def test_anonymous_gets_401(client):
     assert client.get(INVENTORY_URL).status_code == 401
 

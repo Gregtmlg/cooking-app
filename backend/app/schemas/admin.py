@@ -37,3 +37,38 @@ class InventoryRead(BaseModel):
     groups: list[GroupEntryRead]
 
     model_config = {"from_attributes": True}
+
+
+class AccountCreate(BaseModel):
+    """Pas de champ `is_admin` : un admin ne se crée qu'en CLI, sur le serveur."""
+
+    username: str
+    password: str
+    display_name: str | None = None
+    group: str | None = None
+
+    model_config = {"extra": "forbid"}
+
+
+class PasswordReset(BaseModel):
+    password: str
+
+    model_config = {"extra": "forbid"}
+
+
+class ProfileCreate(BaseModel):
+    display_name: str
+    group: str | None = None
+
+    model_config = {"extra": "forbid"}
+
+
+class OwnerChange(BaseModel):
+    profile_id: int
+
+    model_config = {"extra": "forbid"}
+
+
+class OwnerRead(BaseModel):
+    recipe_id: int
+    owner_id: int
