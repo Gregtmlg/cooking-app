@@ -22,6 +22,14 @@ class AudienceForbidden(RecipeServiceError):
     """Le profil tente de publier pour un groupe dont il n'est pas membre."""
 
 
+class ReassignForbidden(RecipeServiceError):
+    """Seul l'admin peut changer le propriétaire d'une recette."""
+
+
+class NewOwnerNotFound(RecipeServiceError):
+    """Le profil désigné comme nouveau propriétaire n'existe pas."""
+
+
 def can_edit(profile: Profile, recipe: Recipe) -> bool:
     """RÈGLE UNIQUE des droits d'écriture : le propriétaire ou l'admin.
 
@@ -50,6 +58,27 @@ def visible_recipes(profile: Profile) -> Select[tuple[Recipe]]:
             Recipe.audience.any(Group.id.in_(group_ids)),
         )
     )
+
+
+def reassign_recipe(
+    db: Session, actor: Profile, recipe_id: int, new_owner_id: int
+) -> Recipe | None:
+    """
+    Change le propriétaire d'une recette (admin uniquement).
+    Ne modifie pas l'audience
+    """
+    if not actor.account.is_admin:
+        raise ReassignForbidden("Seul l'administrateur peut changer le propriétaire d'une recette.")
+    recipe = get_recipe(db, actor, recipe_id)
+    if not recipe:
+        return None  # invisible ou inexistante → 404 (on ne révèle rien)
+    new_owner = db.get(Profile, new_owner_id)
+    if not new_owner:
+        raise NewOwnerNotFound(f"Le profil {new_owner_id} n'existe pas.")
+    recipe.owner_id = new_owner_id
+    db.commit()
+    db.refresh(recipe)
+    return recipe
 
 
 def audience_options(db: Session, profile: Profile) -> list[Group]:

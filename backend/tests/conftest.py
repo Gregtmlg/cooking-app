@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -171,3 +173,28 @@ def world(db_session):
     recipe("privee")
     db_session.commit()
     return profiles
+
+
+@pytest.fixture
+def admin_client(client, db_session):
+    """Client connecté en admin (mot de passe définitif, profil auto-sélectionné)."""
+    from app.services.account_service import create_account
+
+    admin = create_account(db_session, username="Admin", password="motdepasse123", is_admin=True)
+    admin.must_change_password = False
+    db_session.commit()
+    response = client.post(
+        "/api/v1/auth/login", json={"username": "Admin", "password": "motdepasse123"}
+    )
+    assert response.status_code == 200
+    return client
+
+
+@pytest.fixture
+def app_logs(caplog):
+    """Rouvre la propagation de "app" pour que caplog (logger racine) voie nos événements."""
+    logger = logging.getLogger("app")
+    logger.propagate = True
+    caplog.set_level(logging.INFO, logger="app")
+    yield caplog
+    logger.propagate = False
