@@ -1,3 +1,13 @@
+# Rotation des logs Docker (pilote json-file) : sans elle, chaque conteneur écrit dans
+# un fichier qui grossit SANS LIMITE sur le disque du serveur. 5 × 10 Mo par conteneur.
+# `x-` = champ d'extension ignoré par Compose ; `&` / `*` = ancre / alias YAML (une
+# seule définition, réutilisée par chaque service).
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
 services:
   backend:
     # ${TAG:-main} : vaut "main" par défaut. Le rollback se fait par
@@ -9,6 +19,7 @@ services:
     env_file:
       - ./backend.env
     restart: unless-stopped
+    logging: *default-logging
 
   frontend:
     image: ghcr.io/gregtmlg/cooking-app-frontend:${TAG:-main}
@@ -21,3 +32,4 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    logging: *default-logging
