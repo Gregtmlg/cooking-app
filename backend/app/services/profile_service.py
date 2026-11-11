@@ -35,7 +35,9 @@ def select_profile(db: Session, auth_session: AuthSession, profile_id: int) -> P
         ProfileNotFound: Si le profil n'existe pas ou n'appartient pas à l'utilisateur.
     """
     profile = db.get(Profile, profile_id)
-    if profile is None or profile.account_id != auth_session.account_id:
+    # Profil désactivé = introuvable (J5a) : cacher un profil de la liste ne suffit pas,
+    # son id pourrait être envoyé à la main. Même erreur fusionnée (anti-énumération).
+    if profile is None or profile.account_id != auth_session.account_id or not profile.is_active:
         raise ProfileNotFound("Ce profil n'existe pas ou n'est pas accessible.")
     auth_session.profile_id = profile.id
     db.commit()
@@ -46,6 +48,8 @@ def find_profile(db: Session, username: str, display_name: str | None = None) ->
     """Retrouve un profil par son compte et, si besoin, son nom affiché.
 
     `display_name` peut être omis quand le compte n'a qu'un profil.
+    Cherche parmi TOUS les profils, désactivés compris (J5a) : c'est ainsi que la CLI
+    retrouve un profil pour le réactiver.
     """
     account = db.scalar(select(Account).where(Account.username_key == username_key(username)))
     if account is None:

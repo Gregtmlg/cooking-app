@@ -8,6 +8,7 @@ class ProfileEntryRead(BaseModel):
     display_name: str
     groups: list[str]
     theme: str | None
+    deactivated_at: datetime | None
 
     model_config = {"from_attributes": True}
 
@@ -17,6 +18,7 @@ class AccountEntryRead(BaseModel):
     username: str
     is_admin: bool
     must_change_password: bool
+    is_active: bool
     created_at: datetime
     active_sessions: int
     profiles: list[ProfileEntryRead]

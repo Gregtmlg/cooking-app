@@ -5,6 +5,10 @@ from app.services.account_service import (
     AccountServiceError,
     add_profile,
     create_account,
+    deactivate_account,
+    deactivate_profile,
+    find_account,
+    reactivate_profile,
     reset_password,
 )
 from app.services.group_service import (
@@ -77,7 +81,11 @@ def reset_password_cmd(
         help="Nouveau mot de passe provisoire.",
     ),
 ):
-    """Réinitialise le mot de passe d'un compte (met must_change_password à True)."""
+    """Réinitialise le mot de passe d'un compte et révoque ses sessions.
+
+    Compte mono-profil : mot de passe provisoire (changement forcé à la connexion).
+    Compte partagé (multi-profils, désactivés compris) : mot de passe définitif.
+    """
     db = SessionLocal()
     try:
         account = reset_password(db, username=username, new_password=password)
@@ -168,11 +176,16 @@ def inventory_cmd():
             if on
         ]
         suffix = f" [{', '.join(flags)}]" if flags else ""
-        typer.echo(f"  #{a.id} {a.username}{suffix} — {a.active_sessions} session(s) active(s)")
+        state = "" if a.is_active else " [INACTIF]"
+        typer.echo(
+            f"  #{a.id} {a.username}{suffix}{state} — {a.active_sessions} session(s) active(s)"
+        )
         for p in a.profiles:
             groups = ", ".join(p.groups) or "sans groupe"
+            off = f" — désactivé le {p.deactivated_at:%d/%m/%Y}" if p.deactivated_at else ""
             typer.echo(
-                f"      · {p.display_name} (#{p.id}) — {groups} — thème : {p.theme or 'neutre'}"
+                f"      · {p.display_name} (#{p.id}) — {groups} — "
+                f"thème : {p.theme or 'neutre'}{off}"
             )
 
     typer.secho("Groupes", bold=True)
@@ -197,6 +210,68 @@ def add_profile_cmd(
             fg=typer.colors.GREEN,
         )
     except (AccountServiceError, GroupServiceError) as e:
+        typer.secho(f"✗ {e}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from None
+    finally:
+        db.close()
+
+
+@cli.command("deactivate-profile")
+def deactivate_profile_cmd(
+    username: str = typer.Option(..., help="Identifiant du compte."),
+    profile: str | None = typer.Option(
+        None, help="Nom affiché du profil (facultatif si le compte n'a qu'un profil)."
+    ),
+):
+    """Désactive un profil (réversible). Le dernier profil actif emporte le compte."""
+    db = SessionLocal()
+    try:
+        target = find_profile(db, username=username, display_name=profile)
+        deactivate_profile(db, target)  # actor=None : pas de « soi-même » en CLI
+        suite = "" if target.account.is_active else " Plus aucun profil actif : compte inactif."
+        typer.secho(f"✓ Profil « {target.display_name} » désactivé.{suite}", fg=typer.colors.GREEN)
+    except (ProfileServiceError, AccountServiceError) as e:
+        typer.secho(f"✗ {e}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from None
+    finally:
+        db.close()
+
+
+@cli.command("reactivate-profile")
+def reactivate_profile_cmd(
+    username: str = typer.Option(..., help="Identifiant du compte."),
+    profile: str | None = typer.Option(
+        None, help="Nom affiché du profil (facultatif si le compte n'a qu'un profil)."
+    ),
+):
+    """Réactive un profil désactivé (et donc son compte s'il était inactif)."""
+    db = SessionLocal()
+    try:
+        target = find_profile(db, username=username, display_name=profile)
+        reactivate_profile(db, target)
+        typer.secho(f"✓ Profil « {target.display_name} » réactivé.", fg=typer.colors.GREEN)
+    except (ProfileServiceError, AccountServiceError) as e:
+        typer.secho(f"✗ {e}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from None
+    finally:
+        db.close()
+
+
+@cli.command("deactivate-account")
+def deactivate_account_cmd(
+    username: str = typer.Option(..., help="Identifiant du compte à désactiver."),
+):
+    """Désactive tous les profils actifs d'un compte (raccourci, réversible profil par profil)."""
+    db = SessionLocal()
+    try:
+        target = find_account(db, username)
+        names = [p.display_name for p in target.active_profiles]
+        deactivate_account(db, target)
+        typer.secho(
+            f"✓ Compte « {target.username} » désactivé (profils : {', '.join(names)}).",
+            fg=typer.colors.GREEN,
+        )
+    except (ProfileServiceError, AccountServiceError) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
     finally:

@@ -17,6 +17,7 @@ class ProfileEntry:
     display_name: str
     groups: list[str]
     theme: str | None
+    deactivated_at: datetime | None  # None = actif (J5a)
 
 
 @dataclass(frozen=True)
@@ -25,6 +26,7 @@ class AccountEntry:
     username: str
     is_admin: bool
     must_change_password: bool
+    is_active: bool  # dérivé : au moins un profil actif (J5a)
     created_at: datetime
     active_sessions: int
     profiles: list[ProfileEntry]
@@ -50,6 +52,7 @@ def profile_entry(p: Profile) -> ProfileEntry:
         display_name=p.display_name,
         groups=[g.slug for g in sorted(p.groups, key=lambda g: g.id)],
         theme=(t.slug if (t := theme_for(p)) else None),
+        deactivated_at=p.deactivated_at,
     )
 
 
@@ -60,6 +63,7 @@ def account_entry(a: Account) -> AccountEntry:
         username=a.username,
         is_admin=a.is_admin,
         must_change_password=a.must_change_password,
+        is_active=a.is_active,
         created_at=a.created_at,
         active_sessions=active_session_count(a),
         profiles=[profile_entry(p) for p in sorted(a.profiles, key=lambda p: p.id)],
