@@ -1,19 +1,15 @@
 import hashlib
 import secrets
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
+from app.core.clock import utcnow as _utcnow
 from app.models.account import Account
 from app.models.session import AuthSession
 
 SESSION_LIFETIME = timedelta(days=14)
-
-
-def _utcnow() -> datetime:
-    # UTC mais naïf, pour rester comparable aux datetimes relus de SQLite.
-    return datetime.now(UTC).replace(tzinfo=None)
 
 
 def _hash_token(token: str) -> str:
@@ -42,6 +38,15 @@ def validate_session(db: Session, token: str) -> AuthSession | None:
         delete_session(db, token)  # nettoyage paresseux
         return None  # ← le rejet, sans lui la session morte passerait
 
+    # Porte « session déjà ouverte » (J5a) : compte devenu inactif, ou profil
+    # sélectionné désactivé. Normalement ces sessions ont déjà été supprimées à la
+    # désactivation (même commit) ; ce contrôle est la défense en profondeur.
+    if not session.account.is_active or (
+        session.profile is not None and not session.profile.is_active
+    ):
+        delete_session(db, token)
+        return None
+
     # Cas nominal : session valide. Prolongation glissante si past mi-vie.
     if session.expires_at - _utcnow() < SESSION_LIFETIME / 2:
         session.expires_at = _utcnow() + SESSION_LIFETIME
@@ -61,6 +66,15 @@ def delete_account_session(db: Session, account_id: int) -> None:
     """Révoque toutes les sessions d'un compte. Ne commite pas : l'appelant décide."""
 
     db.execute(delete(AuthSession).where(AuthSession.account_id == account_id))
+
+
+def delete_profile_sessions(db: Session, profile_ids: list[int]) -> None:
+    """Révoque les sessions où l'un de ces profils est sélectionné (D3, J5a).
+
+    Les autres sessions du compte (autres membres, ou sélection en attente) restent.
+    Ne commite pas : l'appelant décide.
+    """
+    db.execute(delete(AuthSession).where(AuthSession.profile_id.in_(profile_ids)))
 
 
 def active_session_count(account: Account) -> int:

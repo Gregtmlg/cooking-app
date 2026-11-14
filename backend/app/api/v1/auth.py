@@ -76,8 +76,10 @@ def login(credentials: LoginRequest, db: DbSession, response: Response, request:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Identifiant ou mot de passe incorrect.",
         )
-    # Auto-sélection si le compte n'a qu'un seul profil
-    profile = account.profiles[0] if len(account.profiles) == 1 else None
+    # Auto-sélection s'il ne reste qu'un profil ACTIF (J5a : Michel seul quand Jeanne
+    # est désactivée). Les règles de mot de passe, elles, comptent TOUS les profils (D2).
+    active = account.active_profiles
+    profile = active[0] if len(active) == 1 else None
     token = session_service.create_session(
         db, account.id, profile_id=profile.id if profile else None
     )
@@ -121,8 +123,8 @@ def choose_theme(payload: ThemeChoice, profile: CurrentProfile, db: DbSession):
 
 @router.get("/profiles", response_model=list[ProfileRead])
 def list_profiles(account: CurrentAccount):
-    """Liste les profils du compte connecté (pour l'écran de sélection)."""
-    return account.profiles
+    """Liste les profils ACTIFS du compte connecté (pour l'écran de sélection)."""
+    return account.active_profiles
 
 
 @router.post("/select-profile", response_model=ProfileRead)

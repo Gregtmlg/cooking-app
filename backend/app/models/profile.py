@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -33,3 +34,20 @@ class Profile(Base):
         ForeignKey("groups.id", name="fk_profiles_theme_group_id_groups"), nullable=True
     )
     theme_group: Mapped["Group | None"] = relationship("Group", foreign_keys=[theme_group_id])
+    # Désactivation (J5a) : NULL = profil actif ; une date = désactivé depuis.
+    # Réversible (réactivation = remettre NULL). Les recettes du profil restent.
+    deactivated_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    @hybrid_property
+    def is_active(self) -> bool:
+        """RÈGLE UNIQUE « profil actif », utilisable en Python ET en SQL.
+
+        `profile.is_active` → bool ; `select(Profile).where(Profile.is_active)` →
+        `WHERE deactivated_at IS NULL`.
+        """
+        return self.deactivated_at is None
+
+    @is_active.inplace.expression
+    @classmethod
+    def _is_active_expression(cls):
+        return cls.deactivated_at.is_(None)

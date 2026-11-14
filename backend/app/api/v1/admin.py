@@ -30,8 +30,12 @@ from app.services.account_service import (
     AccountServiceError,
     InvalidPassword,
     InvalidProfileName,
+    LastAdminForbidden,
+    ProfileAlreadyDeactivated,
     ProfileNameTaken,
+    ProfileNotDeactivated,
     ProvisionalPasswordPending,
+    SelfDeactivationForbidden,
     UsernameAlreadyExists,
 )
 from app.services.group_service import AlreadyInGroup, GroupNotFound, GroupServiceError, NotInGroup
@@ -51,6 +55,10 @@ _HTTP_STATUS: dict[type[Exception], int] = {
     ProvisionalPasswordPending: status.HTTP_409_CONFLICT,
     AlreadyInGroup: status.HTTP_409_CONFLICT,
     NotInGroup: status.HTTP_409_CONFLICT,
+    ProfileAlreadyDeactivated: status.HTTP_409_CONFLICT,
+    ProfileNotDeactivated: status.HTTP_409_CONFLICT,
+    SelfDeactivationForbidden: status.HTTP_409_CONFLICT,  # anti-verrouillage
+    LastAdminForbidden: status.HTTP_409_CONFLICT,  # anti-verrouillage
     InvalidPassword: status.HTTP_422_UNPROCESSABLE_CONTENT,
     InvalidProfileName: status.HTTP_422_UNPROCESSABLE_CONTENT,
     GroupNotFound: status.HTTP_422_UNPROCESSABLE_CONTENT,  # groupe nommé dans le CORPS
@@ -240,3 +248,62 @@ def reassign_recipe(
             new_owner_id=recipe.owner_id,
         )
         return OwnerRead(recipe_id=recipe.id, owner_id=recipe.owner_id)  # type: ignore
+
+
+# --- Désactivation / réactivation (J5a) ---------------------------------------------------
+# `actor` = le profil de l'admin connecté (CurrentProfile) : le service en a besoin pour
+# la règle « jamais soi-même ». En CLI, actor=None.
+
+
+@router.post("/profiles/{profile_id}/deactivate", response_model=ProfileEntryRead)
+def deactivate_profile(profile_id: int, db: DbSession, admin: AdminAccount, actor: CurrentProfile):
+    with _audited("profile_deactivated", admin, target_profile_id=profile_id):
+        profile = _profile_or_404(db, profile_id)
+        try:
+            account_service.deactivate_profile(db, profile, actor=actor)
+        except _DOMAIN_ERRORS as e:
+            raise _http_error(e) from None
+        _audit(
+            "admin.profile_deactivated",
+            admin,
+            target_profile_id=profile.id,
+            target_account_id=profile.account_id,
+            account_now_active=profile.account.is_active,
+        )
+        return profile_entry(profile)
+
+
+@router.post("/profiles/{profile_id}/reactivate", response_model=ProfileEntryRead)
+def reactivate_profile(profile_id: int, db: DbSession, admin: AdminAccount):
+    with _audited("profile_reactivated", admin, target_profile_id=profile_id):
+        profile = _profile_or_404(db, profile_id)
+        try:
+            account_service.reactivate_profile(db, profile)
+        except _DOMAIN_ERRORS as e:
+            raise _http_error(e) from None
+        _audit(
+            "admin.profile_reactivated",
+            admin,
+            target_profile_id=profile.id,
+            target_account_id=profile.account_id,
+        )
+        return profile_entry(profile)
+
+
+@router.post("/accounts/{account_id}/deactivate", response_model=AccountEntryRead)
+def deactivate_account(account_id: int, db: DbSession, admin: AdminAccount, actor: CurrentProfile):
+    with _audited("account_deactivated", admin, target_account_id=account_id):
+        account = _account_or_404(db, account_id)
+        deactivated_ids = [p.id for p in account.active_profiles]
+        try:
+            account_service.deactivate_account(db, account, actor=actor)
+        except _DOMAIN_ERRORS as e:
+            raise _http_error(e) from None
+        _audit(
+            "admin.account_deactivated",
+            admin,
+            target_account_id=account.id,
+            target_username=account.username,
+            target_profile_ids=deactivated_ids,
+        )
+        return account_entry(account)
