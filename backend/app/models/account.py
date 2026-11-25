@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, String, exists, func
+from sqlalchemy import Boolean, DateTime, Index, Integer, String, exists, false, func, text
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
@@ -15,6 +15,19 @@ if TYPE_CHECKING:
 
 class Account(Base):
     __tablename__ = "accounts"
+    __table_args__ = (
+        # UN SEUL compte Système, garanti par la base (J5b). Index unique PARTIEL : il ne
+        # porte que sur les lignes is_system = vrai — un UNIQUE simple refuserait dès le
+        # 2e compte ordinaire (doublon de « faux »). Déclaré ici, et pas seulement dans la
+        # migration, pour que les tests (create_all) aient la même garantie.
+        Index(
+            "uq_accounts_single_system",
+            "is_system",
+            unique=True,
+            sqlite_where=text("is_system = 1"),
+            postgresql_where=text("is_system"),
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     username: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
@@ -23,6 +36,12 @@ class Account(Base):
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     must_change_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # Compte « Système » (J5b) : réceptacle des recettes des profils purgés. Non
+    # connectable (hash invalide + profil désactivé en permanence), hors de tout groupe,
+    # intouchable par l'admin (cf. system_service.ensure_not_system).
+    is_system: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
     profiles: Mapped[list["Profile"]] = relationship(
         "Profile", back_populates="account", cascade="all, delete-orphan"

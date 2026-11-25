@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models.group import Group
 from app.models.profile import Profile
+from app.services.system_service import ensure_not_system
 
 
 class GroupServiceError(Exception):
@@ -28,6 +29,7 @@ def get_group_by_slug(db: Session, slug: str) -> Group:
 
 
 def add_profile_to_group(db: Session, profile: Profile, group_slug: str) -> Group:
+    ensure_not_system(profile.account)  # Système reste hors de tout groupe
     group = get_group_by_slug(db, group_slug)
 
     if group in profile.groups:
@@ -40,6 +42,7 @@ def add_profile_to_group(db: Session, profile: Profile, group_slug: str) -> Grou
 
 
 def remove_profile_from_group(db: Session, profile: Profile, group_slug: str) -> Group:
+    ensure_not_system(profile.account)
     group = get_group_by_slug(db, group_slug)
 
     if group not in profile.groups:

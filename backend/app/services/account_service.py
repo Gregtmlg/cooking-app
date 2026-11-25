@@ -1,13 +1,17 @@
-from sqlalchemy import select
+from dataclasses import dataclass
+
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.clock import utcnow
-from app.core.identifiers import username_key
+from app.core.identifiers import clean_username, username_key
 from app.core.security import hash_password, needs_rehash, verify_dummy, verify_password
 from app.models.account import Account
 from app.models.profile import Profile
+from app.models.recipe import Recipe
 from app.services.group_service import get_group_by_slug
 from app.services.session_service import delete_account_session, delete_profile_sessions
+from app.services.system_service import ensure_not_system, get_system_profile
 
 MIN_PASSWORD_LENGTH = 8
 MAX_PASSWORD_LENGTH = 128
@@ -54,6 +58,12 @@ class SelfDeactivationForbidden(AccountServiceError): ...
 
 
 class LastAdminForbidden(AccountServiceError): ...
+
+
+class ProfileStillActive(AccountServiceError): ...
+
+
+class PurgeConfirmationMismatch(AccountServiceError): ...
 
 
 def _account_by_username(db: Session, username: str) -> Account | None:
@@ -118,6 +128,7 @@ def reset_password(db: Session, username: str, new_password: str) -> Account:
     _validate_password_length(new_password)
 
     account = find_account(db, username)
+    ensure_not_system(account)  # lui donner un mot de passe le rendrait utilisable
 
     account.password_hash = hash_password(new_password)
     # TOUS les profils, actifs ou non (D2, J5a) : un compte qui a été partagé le reste —
@@ -188,6 +199,7 @@ def add_profile(
     de passe définitif (sinon : changement interdit car multi-profils → impasse).
     """
     account = find_account(db, username)
+    ensure_not_system(account)
 
     if account.must_change_password:
         raise ProvisionalPasswordPending(
@@ -234,6 +246,7 @@ def _deactivate(
     db: Session, account: Account, targets: list[Profile], actor: Profile | None
 ) -> None:
     """Cœur commun à `deactivate_profile` et `deactivate_account`. Ne commite pas."""
+    ensure_not_system(account)
     # Anti-verrouillage 1 : jamais soi-même. `actor` vaut None en CLI (pas de session).
     if actor is not None and any(p.id == actor.id for p in targets):
         raise SelfDeactivationForbidden("Vous ne pouvez pas désactiver votre propre profil.")
@@ -257,6 +270,7 @@ def _deactivate(
 
 def deactivate_profile(db: Session, profile: Profile, actor: Profile | None = None) -> Profile:
     """Désactive un profil (réversible). Ses recettes restent, intactes."""
+    ensure_not_system(profile.account)
     if not profile.is_active:
         raise ProfileAlreadyDeactivated(f"Le profil « {profile.display_name} » est déjà désactivé.")
     _deactivate(db, profile.account, [profile], actor)
@@ -267,6 +281,7 @@ def deactivate_profile(db: Session, profile: Profile, actor: Profile | None = No
 
 def deactivate_account(db: Session, account: Account, actor: Profile | None = None) -> Account:
     """Raccourci : désactive d'un coup tous les profils actifs du compte (même cœur)."""
+    ensure_not_system(account)
     targets = account.active_profiles
     if not targets:
         raise ProfileAlreadyDeactivated(f"Le compte « {account.username} » est déjà inactif.")
@@ -278,9 +293,82 @@ def deactivate_account(db: Session, account: Account, actor: Profile | None = No
 
 def reactivate_profile(db: Session, profile: Profile) -> Profile:
     """Réactive un profil — et donc son compte s'il était inactif (état dérivé)."""
+    ensure_not_system(profile.account)  # Système reste désactivé en permanence
     if profile.is_active:
         raise ProfileNotDeactivated(f"Le profil « {profile.display_name} » est déjà actif.")
     profile.deactivated_at = None
     db.commit()
     db.refresh(profile)
     return profile
+
+
+# --- Purge (J5b) ---------------------------------------------------------------------------
+# Irréversible. Seulement sur un profil DÉJÀ désactivé (D5 : délai de réflexion), avec
+# confirmation vérifiée PAR LE SERVEUR (le nom retapé). Les recettes passent au profil
+# Système AVANT la suppression — SQLite n'applique pas les clés étrangères par défaut :
+# un oubli laisserait des owner_id orphelins sans la moindre erreur. Un seul commit.
+
+
+@dataclass(frozen=True)
+class PurgeResult:
+    """Constat d'une purge — des IDS seulement : on n'archive pas ce qu'on efface."""
+
+    account_id: int
+    profile_ids: list[int]
+    account_deleted: bool
+    recipes_reassigned: int
+
+
+def _purge(db: Session, account: Account, targets: list[Profile]) -> PurgeResult:
+    """Cœur commun aux deux purges. Ne commite pas."""
+    system = get_system_profile(db)
+    ids = [p.id for p in targets]
+
+    # 1. Les recettes survivent à la personne : elles passent à Système (audience intacte).
+    reassigned = db.execute(
+        update(Recipe).where(Recipe.owner_id.in_(ids)).values(owner_id=system.id)
+    ).rowcount
+
+    # 2. Sessions de ces profils (déjà supprimées à la désactivation : défense en profondeur).
+    delete_profile_sessions(db, ids)
+
+    # 3. Les profils : appartenances aux groupes (table d'association) et choix de thème
+    #    (colonne du profil) disparaissent avec eux.
+    for profile in targets:
+        account.profiles.remove(profile)  # delete-orphan → DELETE du profil
+
+    # 4. Plus aucun profil → le compte part aussi (sessions en cascade) ; identifiant libéré.
+    account_deleted = not account.profiles
+    if account_deleted:
+        db.delete(account)
+
+    return PurgeResult(account.id, ids, account_deleted, reassigned)
+
+
+def purge_profile(db: Session, profile: Profile, confirm: str) -> PurgeResult:
+    """Purge un profil désactivé. `confirm` doit être son nom affiché, retapé exactement."""
+    account = profile.account
+    ensure_not_system(account)
+    if profile.is_active:
+        raise ProfileStillActive(
+            f"Le profil « {profile.display_name} » est actif : désactivez-le d'abord."
+        )
+    if confirm.strip() != profile.display_name:
+        raise PurgeConfirmationMismatch("Confirmation invalide : retapez le nom exact du profil.")
+    result = _purge(db, account, [profile])
+    db.commit()
+    return result
+
+
+def purge_account(db: Session, account: Account, confirm: str) -> PurgeResult:
+    """Purge un compte inactif et tous ses profils. `confirm` = l'identifiant, retapé exactement."""
+    ensure_not_system(account)
+    if account.is_active:
+        raise ProfileStillActive(
+            f"Le compte « {account.username} » a encore un profil actif : désactivez-le d'abord."
+        )
+    if clean_username(confirm) != account.username:
+        raise PurgeConfirmationMismatch("Confirmation invalide : retapez l'identifiant exact.")
+    result = _purge(db, account, list(account.profiles))
+    db.commit()
+    return result

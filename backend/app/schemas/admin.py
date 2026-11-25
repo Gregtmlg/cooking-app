@@ -19,6 +19,7 @@ class AccountEntryRead(BaseModel):
     is_admin: bool
     must_change_password: bool
     is_active: bool
+    is_system: bool
     created_at: datetime
     active_sessions: int
     profiles: list[ProfileEntryRead]
@@ -74,3 +75,24 @@ class OwnerChange(BaseModel):
 class OwnerRead(BaseModel):
     recipe_id: int
     owner_id: int
+
+
+class PurgeConfirm(BaseModel):
+    """Confirmation vérifiée PAR LE SERVEUR : le nom (profil) ou l'identifiant (compte),
+    retapé exactement. Une confirmation qui n'existerait que dans le front serait
+    contournée par Swagger, curl ou la CLI (principe 8)."""
+
+    confirm: str
+
+    model_config = {"extra": "forbid"}
+
+
+class PurgeRead(BaseModel):
+    """Résultat d'une purge : des ids seulement, aucun nom."""
+
+    account_id: int
+    profile_ids: list[int]
+    account_deleted: bool
+    recipes_reassigned: int
+
+    model_config = {"from_attributes": True}
