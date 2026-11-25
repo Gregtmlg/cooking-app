@@ -27,6 +27,7 @@ class AccountEntry:
     is_admin: bool
     must_change_password: bool
     is_active: bool  # dérivé : au moins un profil actif (J5a)
+    is_system: bool  # compte Système (J5b)
     created_at: datetime
     active_sessions: int
     profiles: list[ProfileEntry]
@@ -64,6 +65,7 @@ def account_entry(a: Account) -> AccountEntry:
         is_admin=a.is_admin,
         must_change_password=a.must_change_password,
         is_active=a.is_active,
+        is_system=a.is_system,
         created_at=a.created_at,
         active_sessions=active_session_count(a),
         profiles=[profile_entry(p) for p in sorted(a.profiles, key=lambda p: p.id)],

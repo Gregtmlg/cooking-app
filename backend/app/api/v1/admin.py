@@ -23,6 +23,8 @@ from app.schemas.admin import (
     PasswordReset,
     ProfileCreate,
     ProfileEntryRead,
+    PurgeConfirm,
+    PurgeRead,
 )
 from app.services import account_service, group_service, recipe_service
 from app.services.account_service import (
@@ -34,13 +36,16 @@ from app.services.account_service import (
     ProfileAlreadyDeactivated,
     ProfileNameTaken,
     ProfileNotDeactivated,
+    ProfileStillActive,
     ProvisionalPasswordPending,
+    PurgeConfirmationMismatch,
     SelfDeactivationForbidden,
     UsernameAlreadyExists,
 )
 from app.services.group_service import AlreadyInGroup, GroupNotFound, GroupServiceError, NotInGroup
 from app.services.inventory_service import account_entry, get_inventory, profile_entry
 from app.services.recipe_service import NewOwnerNotFound, RecipeServiceError
+from app.services.system_service import SystemAccountProtected
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +64,9 @@ _HTTP_STATUS: dict[type[Exception], int] = {
     ProfileNotDeactivated: status.HTTP_409_CONFLICT,
     SelfDeactivationForbidden: status.HTTP_409_CONFLICT,  # anti-verrouillage
     LastAdminForbidden: status.HTTP_409_CONFLICT,  # anti-verrouillage
+    ProfileStillActive: status.HTTP_409_CONFLICT,  # purge : désactiver d'abord (D5)
+    SystemAccountProtected: status.HTTP_409_CONFLICT,  # compte Système intouchable
+    PurgeConfirmationMismatch: status.HTTP_422_UNPROCESSABLE_CONTENT,
     InvalidPassword: status.HTTP_422_UNPROCESSABLE_CONTENT,
     InvalidProfileName: status.HTTP_422_UNPROCESSABLE_CONTENT,
     GroupNotFound: status.HTTP_422_UNPROCESSABLE_CONTENT,  # groupe nommé dans le CORPS
@@ -66,7 +74,12 @@ _HTTP_STATUS: dict[type[Exception], int] = {
 }
 
 
-_DOMAIN_ERRORS = (AccountServiceError, GroupServiceError, RecipeServiceError)
+_DOMAIN_ERRORS = (
+    AccountServiceError,
+    GroupServiceError,
+    RecipeServiceError,
+    SystemAccountProtected,
+)
 
 
 def _http_error(error: Exception) -> HTTPException:
@@ -307,3 +320,45 @@ def deactivate_account(account_id: int, db: DbSession, admin: AdminAccount, acto
             target_profile_ids=deactivated_ids,
         )
         return account_entry(account)
+
+
+# --- Purge (J5b) --------------------------------------------------------------------------
+# POST et non DELETE : la requête porte un CORPS (la confirmation), et un corps sur un
+# DELETE est mal supporté par les outils HTTP. L'audit ne garde que des ids.
+
+
+@router.post("/profiles/{profile_id}/purge", response_model=PurgeRead)
+def purge_profile(profile_id: int, payload: PurgeConfirm, db: DbSession, admin: AdminAccount):
+    with _audited("profile_purged", admin, target_profile_id=profile_id):
+        profile = _profile_or_404(db, profile_id)
+        try:
+            result = account_service.purge_profile(db, profile, payload.confirm)
+        except _DOMAIN_ERRORS as e:
+            raise _http_error(e) from None
+        _audit(
+            "admin.profile_purged",
+            admin,
+            target_profile_id=profile_id,
+            target_account_id=result.account_id,
+            account_deleted=result.account_deleted,
+            recipes_reassigned=result.recipes_reassigned,
+        )
+        return result
+
+
+@router.post("/accounts/{account_id}/purge", response_model=PurgeRead)
+def purge_account(account_id: int, payload: PurgeConfirm, db: DbSession, admin: AdminAccount):
+    with _audited("account_purged", admin, target_account_id=account_id):
+        account = _account_or_404(db, account_id)
+        try:
+            result = account_service.purge_account(db, account, payload.confirm)
+        except _DOMAIN_ERRORS as e:
+            raise _http_error(e) from None
+        _audit(
+            "admin.account_purged",
+            admin,
+            target_account_id=account_id,
+            target_profile_ids=result.profile_ids,
+            recipes_reassigned=result.recipes_reassigned,
+        )
+        return result

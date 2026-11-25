@@ -8,6 +8,8 @@ from app.services.account_service import (
     deactivate_account,
     deactivate_profile,
     find_account,
+    purge_account,
+    purge_profile,
     reactivate_profile,
     reset_password,
 )
@@ -18,6 +20,7 @@ from app.services.group_service import (
 )
 from app.services.inventory_service import get_inventory
 from app.services.profile_service import ProfileServiceError, find_profile
+from app.services.system_service import SystemAccountProtected
 
 cli = typer.Typer(
     help="Administration de cooking-app (comptes et profils).",
@@ -62,7 +65,7 @@ def create_account_cmd(
             fg=typer.colors.GREEN,
         )
 
-    except (AccountServiceError, GroupServiceError) as e:
+    except (AccountServiceError, GroupServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
 
@@ -98,7 +101,7 @@ def reset_password_cmd(
             f"✓ Mot de passe du compte « {account.username} » réinitialisé. {suite}",
             fg=typer.colors.GREEN,
         )
-    except AccountServiceError as e:
+    except (AccountServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
     finally:
@@ -124,7 +127,7 @@ def add_to_group_cmd(
             fg=typer.colors.GREEN,
         )
 
-    except (ProfileServiceError, GroupServiceError) as e:
+    except (ProfileServiceError, GroupServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
 
@@ -151,7 +154,7 @@ def remove_from_group_cmd(
             fg=typer.colors.GREEN,
         )
 
-    except (ProfileServiceError, GroupServiceError) as e:
+    except (ProfileServiceError, GroupServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
 
@@ -176,7 +179,7 @@ def inventory_cmd():
             if on
         ]
         suffix = f" [{', '.join(flags)}]" if flags else ""
-        state = "" if a.is_active else " [INACTIF]"
+        state = " [SYSTÈME]" if a.is_system else ("" if a.is_active else " [INACTIF]")
         typer.echo(
             f"  #{a.id} {a.username}{suffix}{state} — {a.active_sessions} session(s) active(s)"
         )
@@ -209,7 +212,7 @@ def add_profile_cmd(
             f"« {profile.account.username} » ({group_label}).",
             fg=typer.colors.GREEN,
         )
-    except (AccountServiceError, GroupServiceError) as e:
+    except (AccountServiceError, GroupServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
     finally:
@@ -230,7 +233,7 @@ def deactivate_profile_cmd(
         deactivate_profile(db, target)  # actor=None : pas de « soi-même » en CLI
         suite = "" if target.account.is_active else " Plus aucun profil actif : compte inactif."
         typer.secho(f"✓ Profil « {target.display_name} » désactivé.{suite}", fg=typer.colors.GREEN)
-    except (ProfileServiceError, AccountServiceError) as e:
+    except (ProfileServiceError, AccountServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
     finally:
@@ -250,7 +253,7 @@ def reactivate_profile_cmd(
         target = find_profile(db, username=username, display_name=profile)
         reactivate_profile(db, target)
         typer.secho(f"✓ Profil « {target.display_name} » réactivé.", fg=typer.colors.GREEN)
-    except (ProfileServiceError, AccountServiceError) as e:
+    except (ProfileServiceError, AccountServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
     finally:
@@ -271,7 +274,59 @@ def deactivate_account_cmd(
             f"✓ Compte « {target.username} » désactivé (profils : {', '.join(names)}).",
             fg=typer.colors.GREEN,
         )
-    except (ProfileServiceError, AccountServiceError) as e:
+    except (ProfileServiceError, AccountServiceError, SystemAccountProtected) as e:
+        typer.secho(f"✗ {e}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from None
+    finally:
+        db.close()
+
+
+@cli.command("purge-profile")
+def purge_profile_cmd(
+    username: str = typer.Option(..., help="Identifiant du compte."),
+    profile: str | None = typer.Option(
+        None, help="Nom affiché du profil (facultatif si le compte n'a qu'un profil)."
+    ),
+    confirm: str = typer.Option(
+        ..., prompt="IRRÉVERSIBLE — retapez le nom exact du profil pour confirmer"
+    ),
+):
+    """PURGE un profil déjà désactivé : ses recettes passent à « Système », il est supprimé."""
+    db = SessionLocal()
+    try:
+        target = find_profile(db, username=username, display_name=profile)
+        result = purge_profile(db, target, confirm)
+        suite = " Compte supprimé (plus aucun profil)." if result.account_deleted else ""
+        typer.secho(
+            f"✓ Profil purgé ; {result.recipes_reassigned} recette(s) attribuée(s) à "
+            f"« Système ».{suite}",
+            fg=typer.colors.GREEN,
+        )
+    except (ProfileServiceError, AccountServiceError, SystemAccountProtected) as e:
+        typer.secho(f"✗ {e}", fg=typer.colors.RED)
+        raise typer.Exit(code=1) from None
+    finally:
+        db.close()
+
+
+@cli.command("purge-account")
+def purge_account_cmd(
+    username: str = typer.Option(..., help="Identifiant du compte à purger."),
+    confirm: str = typer.Option(
+        ..., prompt="IRRÉVERSIBLE — retapez l'identifiant exact du compte pour confirmer"
+    ),
+):
+    """PURGE un compte inactif et tous ses profils ; l'identifiant redevient libre."""
+    db = SessionLocal()
+    try:
+        target = find_account(db, username)
+        result = purge_account(db, target, confirm)
+        typer.secho(
+            f"✓ Compte purgé ({len(result.profile_ids)} profil(s)) ; "
+            f"{result.recipes_reassigned} recette(s) attribuée(s) à « Système ».",
+            fg=typer.colors.GREEN,
+        )
+    except (AccountServiceError, SystemAccountProtected) as e:
         typer.secho(f"✗ {e}", fg=typer.colors.RED)
         raise typer.Exit(code=1) from None
     finally:

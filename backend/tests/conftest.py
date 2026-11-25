@@ -198,3 +198,21 @@ def app_logs(caplog):
     caplog.set_level(logging.INFO, logger="app")
     yield caplog
     logger.propagate = False
+
+
+@pytest.fixture
+def system_account(db_session):
+    """Compte « Système », tel que la migration 913f054e527d le crée en dev et en prod.
+
+    Les tests construisent la base par `create_all` (pas par Alembic) : sans cette
+    fixture, il n'existe pas — et le service ne le crée jamais à la volée.
+    """
+    from app.core.clock import utcnow
+    from app.models.account import Account
+    from app.models.profile import Profile
+
+    account = Account(username="Système", password_hash="!", is_system=True)
+    account.profiles.append(Profile(display_name="Système", deactivated_at=utcnow()))
+    db_session.add(account)
+    db_session.commit()
+    return account
