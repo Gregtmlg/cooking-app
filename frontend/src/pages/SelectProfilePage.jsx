@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { getProfiles } from '../api/auth'
+import { ROUTES } from '../routes'
 import styles from './SelectProfilePage.module.css'
 
 export default function SelectProfilePage() {
@@ -37,7 +38,7 @@ export default function SelectProfilePage() {
     setSubmitting(true)
     try {
       await selectProfile(profileId)
-      navigate('/', { replace: true })
+      navigate(ROUTES.home, { replace: true })
     } catch {
       setError("Ce profil n'est pas disponible.")
       setSubmitting(false)

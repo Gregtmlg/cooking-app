@@ -13,6 +13,7 @@ const ANONYMOUS = {
   profile: null,
   theme: null,
   themeOptions: [],
+  canSwitchProfile: false,
 }
 
 // Traduit une réponse SessionRead du backend en état du contexte.
@@ -24,6 +25,7 @@ function authenticated(session) {
     profile: session.profile,
     theme: session.theme, // décidé par le serveur (theme_for) ; null = neutre
     themeOptions: session.theme_options, // ≥ 2 → sélecteur dans l'en-tête
+    canSwitchProfile: session.can_switch_profile, // décidé par le serveur (J6a)
   }
 }
 

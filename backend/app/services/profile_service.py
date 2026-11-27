@@ -44,6 +44,16 @@ def select_profile(db: Session, auth_session: AuthSession, profile_id: int) -> P
     return profile
 
 
+def can_switch_profile(account: Account) -> bool:
+    """Le compte a-t-il un autre profil vers lequel basculer ? (J6a)
+
+    Règle unique, décidée ici et transmise au front dans `SessionRead` : il ne
+    recalcule rien, il affiche ou masque « Changer de profil » (principe 8).
+    Seuls les profils ACTIFS comptent : un profil désactivé n'est pas sélectionnable (J5a).
+    """
+    return len(account.active_profiles) > 1
+
+
 def find_profile(db: Session, username: str, display_name: str | None = None) -> Profile:
     """Retrouve un profil par son compte et, si besoin, son nom affiché.
 

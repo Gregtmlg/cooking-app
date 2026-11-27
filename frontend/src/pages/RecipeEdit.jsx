@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { generatePath, useParams, useNavigate } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import {
   fromApiAudience,
@@ -10,6 +10,7 @@ import {
   updateRecipe,
 } from '../api/recipes'
 import AudienceSelect from '../components/AudienceSelect'
+import { ROUTES } from '../routes'
 import styles from './RecipeForm.module.css'
 
 function RecipeEdit() {
@@ -137,7 +138,7 @@ function RecipeEdit() {
         ...toApiAudience(audience),
         }
         await updateRecipe(id, data)
-        navigate(`/recipes/${id}`)
+        navigate(generatePath(ROUTES.recipe, { id }))
       } catch (err) {
         setError(errorMessage(err))
       }

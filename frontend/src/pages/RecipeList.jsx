@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getRecipes } from '../api/recipes'
-import { Link } from 'react-router-dom'
+import { generatePath, Link } from 'react-router-dom'
+import { ROUTES } from '../routes'
 import styles from './RecipeList.module.css'
 
 function RecipeList() {
@@ -34,7 +35,7 @@ function RecipeList() {
       ) : (
         <div className={styles.grid}>
           {recipes.map((recipe) => (
-            <Link to={`/recipes/${recipe.id}`} className={styles.card} key={recipe.id}>
+            <Link to={generatePath(ROUTES.recipe, { id: recipe.id })} className={styles.card} key={recipe.id}>
               <div className={styles.cardImage}></div>
               <h3 className={styles.cardTitle}>{recipe.title}</h3>
               <p className={styles.cardMeta}>

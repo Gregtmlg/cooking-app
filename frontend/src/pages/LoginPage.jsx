@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { ROUTES } from '../routes'
 import styles from './AuthForm.module.css'
 
 // Messages choisis côté front : on n'affiche jamais un `detail` brut (ex. 422 Pydantic).
@@ -29,7 +30,7 @@ export default function LoginPage() {
 
   if (status === 'loading') return null
   if (status === 'authenticated') {
-    const from = location.state?.from?.pathname ?? '/'
+    const from = location.state?.from?.pathname ?? ROUTES.home
     return <Navigate to={from} replace />
   }
 

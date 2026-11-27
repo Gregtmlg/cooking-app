@@ -53,15 +53,18 @@ def _set_session_cookie(response: Response, token: str) -> None:
 
 
 def _session_read(account: Account, profile: Profile | None) -> SessionRead:
-    """L'état complet de la session, thème compris (calculé par theme_for)."""
+    """L'état complet de la session : thème (theme_for) et droit de changer de profil
+    (can_switch_profile). Le helper ASSEMBLE ; les services DÉCIDENT."""
+    can_switch = profile_service.can_switch_profile(account)
     if profile is None:
-        return SessionRead(account=account, profile=None)  # type: ignore
+        return SessionRead(account=account, profile=None, can_switch_profile=can_switch)  # type: ignore
     theme = group_service.theme_for(profile)
     return SessionRead(
         account=account,  # type: ignore
         profile=profile,  # type: ignore
         theme=ThemeRead.from_group(theme) if theme else None,
         theme_options=[ThemeRead.from_group(g) for g in group_service.theme_options(profile)],
+        can_switch_profile=can_switch,
     )
 
 

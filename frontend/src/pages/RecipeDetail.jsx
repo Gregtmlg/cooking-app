@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { generatePath, useParams, useNavigate, Link } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { getRecipe, deleteRecipe } from '../api/recipes'
+import { ROUTES } from '../routes'
 import styles from './RecipeDetail.module.css'
 
 // Capitalise la première lettre d'un nom d'ingrédient pour l'affichage.
@@ -48,7 +49,7 @@ function RecipeDetail() {
     if (confirmed) {
       try {
         await deleteRecipe(id)
-        navigate('/recipes')
+        navigate(ROUTES.recipes)
       } catch (err) {
         setError(errorMessage(err))
       }
@@ -57,7 +58,7 @@ function RecipeDetail() {
 
   return (
     <div>
-      <Link to="/recipes" className={styles.backLink}>← Retour à la liste</Link>
+      <Link to={ROUTES.recipes} className={styles.backLink}>← Retour à la liste</Link>
       <div className={styles.card}>
         <h2 className={styles.title}>{recipe.title}</h2>
         <p className={styles.description}>{recipe.description}</p>
@@ -96,7 +97,7 @@ function RecipeDetail() {
         {/* Droits calculés par le SERVEUR (can_edit) : le front n'en recalcule aucun. */}
         {recipe.can_edit && (
           <div className={styles.actions}>
-            <Link to={`/recipes/${id}/edit`} className={styles.editButton}>Modifier</Link>
+            <Link to={generatePath(ROUTES.recipeEdit, { id })} className={styles.editButton}>Modifier</Link>
             <button onClick={handleDelete} className={styles.deleteButton}>Supprimer</button>
           </div>
         )}

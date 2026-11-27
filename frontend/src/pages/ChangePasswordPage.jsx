@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { ROUTES } from '../routes'
 import styles from './AuthForm.module.css'
 
 // Miroir des bornes backend (account_service) — pour un message immédiat.
@@ -34,7 +35,7 @@ export default function ChangePasswordPage() {
   const [submitting, setSubmitting] = useState(false)
   
   if (!account.must_change_password) {
-    return <Navigate to="/" replace />
+    return <Navigate to={ROUTES.home} replace />
   }
 
   async function handleSubmit(e) {
@@ -55,7 +56,7 @@ export default function ChangePasswordPage() {
       await changePassword(oldPassword, newPassword)
       // Succès : on quitte la page ; les gardes décident de la suite
       // (sélection de profil si besoin, sinon accueil).
-      navigate('/', { replace: true })
+      navigate(ROUTES.home, { replace: true })
     } catch (err) {
       setError(errorMessage(err))
       setSubmitting(false)

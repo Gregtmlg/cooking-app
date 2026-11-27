@@ -1,0 +1,167 @@
+/* Back-office (J6a). Couleurs uniquement via les variables du thème (index.css). */
+
+.title {
+  font-size: 1.6rem;
+  margin-bottom: var(--space-md);
+}
+
+/* Onglets : passent à la ligne sur mobile plutôt que de déborder. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  border-bottom: 0.5px solid var(--color-border);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.tab {
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.tab:hover {
+  color: var(--color-text);
+  background-color: var(--color-light);
+}
+
+.tabActive {
+  color: var(--color-surface);
+  background-color: var(--color-accent);
+}
+
+.tabActive:hover {
+  color: var(--color-surface);
+  background-color: var(--color-accent);
+}
+
+.error {
+  color: var(--color-accent);
+  margin-bottom: var(--space-md);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.sectionTitle {
+  font-size: 1.2rem;
+  margin-bottom: var(--space-sm);
+}
+
+.cards {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.card {
+  background-color: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-sm);
+}
+
+.profileList {
+  list-style: none;
+  padding-left: var(--space-md);
+  font-size: 0.95rem;
+}
+
+.plainList {
+  list-style: none;
+}
+
+.meta {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* Compte Système : visible (il possède les recettes purgées) mais grisé, sans action. */
+.muted {
+  opacity: 0.6;
+}
+
+/* Le tableau défile DANS son cadre sur mobile : la page, elle, ne déborde pas. */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  background-color: var(--color-surface);
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 0.5px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.table th {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.78rem;
+  border: 0.5px solid var(--color-border);
+}
+
+.badge_neutral {
+  color: var(--color-text-muted);
+}
+
+.badge_on {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.badge_off {
+  color: var(--color-text-muted);
+  background-color: var(--color-light);
+}
+
+.badge_admin {
+  color: var(--color-surface);
+  background-color: var(--color-dark);
+  border-color: var(--color-dark);
+}
+
+.badge_warning {
+  color: var(--color-dark);
+  background-color: var(--color-mid);
+  border-color: var(--color-mid);
+}
+
+.badge_system {
+  color: var(--color-surface);
+  background-color: var(--color-text-muted);
+  border-color: var(--color-text-muted);
+}

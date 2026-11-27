@@ -8,6 +8,7 @@ import {
   toApiAudience,
 } from '../api/recipes'
 import AudienceSelect from '../components/AudienceSelect'
+import { ROUTES } from '../routes'
 import styles from './RecipeForm.module.css'
 
 function RecipeCreate() {
@@ -96,7 +97,7 @@ function RecipeCreate() {
         ...toApiAudience(audience),
       }
       await createRecipe(data)
-      navigate('/recipes')
+      navigate(ROUTES.recipes)
     } catch (err) {
       setError(errorMessage(err))
     }

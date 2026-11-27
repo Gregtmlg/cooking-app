@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom'
 import KitchenSketch from '../components/KitchenSketch.jsx'
 import { useAuth } from '../auth/AuthContext'
 import { brandOf } from '../theme/theme'
+import { ROUTES } from '../routes'
 import styles from './HomePage.module.css'
 
 const navItems = [
-    {label: 'Recettes', to: '/recipes', available: true},
+    {label: 'Recettes', to: ROUTES.recipes, available: true},
+    // Destinations futures : pas encore des routes, `to` ne sert que de clé de liste.
     {label: 'Favoris', to: '/favorites', available: false},
     {label: 'Recommendations', to: '/recommendations', available: false},
 ]
