@@ -17,6 +17,7 @@ from app.models.profile import Profile
 from app.schemas.admin import (
     AccountCreate,
     AccountEntryRead,
+    AdminRecipeRead,
     InventoryRead,
     OwnerChange,
     OwnerRead,
@@ -236,6 +237,14 @@ def remove_from_group(profile_id: int, slug: str, db: DbSession, admin: AdminAcc
             raise _http_error(e) from None
         _audit("admin.group_member_removed", admin, target_profile_id=profile.id, group=slug)
         return profile_entry(profile)
+
+
+@router.get("/recipes", response_model=list[AdminRecipeRead])
+def list_recipes(db: DbSession, actor: CurrentProfile):
+    """Toutes les recettes et leur propriétaire (onglet Réattributions, J6b-2). Lecture seule."""
+    return [
+        AdminRecipeRead.from_recipe(r) for r in recipe_service.list_recipes_for_admin(db, actor)
+    ]
 
 
 @router.put("/recipes/{recipe_id}/owner", response_model=OwnerRead)

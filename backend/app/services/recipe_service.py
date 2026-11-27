@@ -1,5 +1,5 @@
 from sqlalchemy import Select, delete, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.group import Group
 from app.models.ingredient import Ingredient
@@ -106,6 +106,22 @@ def _resolve_audience(
             raise AudienceForbidden(f"Vous ne pouvez pas publier pour le groupe '{slug}'.")
         groups.append(group)
     return groups
+
+
+def list_recipes_for_admin(db: Session, actor: Profile) -> list[Recipe]:
+    """Recettes avec leur propriétaire, pour l'onglet Réattributions du back-office (J6b-2).
+
+    Passe par `visible_recipes` (point d'application unique) : l'admin voit tout ; un
+    non-admin ne verrait que ce qu'il voit déjà — défense en profondeur si la garde
+    `require_admin` venait à manquer. Propriétaire et compte chargés en une fois
+    (`selectinload`) : pas une requête par recette (piège « N+1 »).
+    """
+    query = (
+        visible_recipes(actor)
+        .options(selectinload(Recipe.owner).selectinload(Profile.account))
+        .order_by(Recipe.id)
+    )
+    return list(db.scalars(query))
 
 
 def get_recipe(db: Session, profile: Profile, recipe_id: int) -> Recipe | None:

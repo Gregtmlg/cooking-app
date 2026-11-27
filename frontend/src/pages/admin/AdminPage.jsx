@@ -13,7 +13,7 @@
 // Elle ne redirige jamais : un 401 est traité par l'intercepteur + RequireAuth ;
 // un 403 (droits perdus) n'a pas de code → la page affiche simplement l'erreur.
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { getInventory } from '../../api/admin'
 import { errorMessage } from '../../api/client'
@@ -25,6 +25,7 @@ const TABS = [
   { to: ROUTES.adminAccounts, label: 'Comptes' },
   { to: ROUTES.adminProfiles, label: 'Profils' },
   { to: ROUTES.adminGroups, label: 'Groupes' },
+  { to: ROUTES.adminReassign, label: 'Réattributions' },
 ]
 
 const LOAD_ERROR = "Impossible de charger l'inventaire."
@@ -41,6 +42,8 @@ async function fetchInventory() {
 export default function AdminPage() {
   const [state, setState] = useState({ loading: true, inventory: null, error: null })
   const [notice, setNotice] = useState(null) // message de succès de la dernière action
+  const [actionError, setActionError] = useState(null) // refus d'une action SANS dialogue
+  const feedbackRef = useRef(null)
 
   // Chargement initial — même motif qu'AuthProvider : setState seulement dans le
   // callback de la réponse, et drapeau `ignore` si la page est quittée avant.
@@ -62,13 +65,28 @@ export default function AdminPage() {
   }, [])
 
   // Point UNIQUE de fin d'action : relire d'abord, annoncer ensuite (décision E4).
+  // `extraReloads` : ce qu'un onglet charge lui-même (les recettes des Réattributions).
   const afterAction = useCallback(
-    async (message) => {
-      await reload()
+    async (message, ...extraReloads) => {
+      await Promise.all([reload(), ...extraReloads.map((r) => r())])
+      setActionError(null)
       setNotice(message)
     },
     [reload],
   )
+
+  // Refus du serveur pour une action SANS dialogue (groupes, réattribution) : il
+  // s'affiche dans le bandeau, puisqu'il n'y a pas de dialogue pour le porter.
+  const reportError = useCallback((message) => {
+    setNotice(null)
+    setActionError(message)
+  }, [])
+
+  // Sur mobile, le bandeau est en haut : on le ramène à l'écran dès qu'il change,
+  // sinon une action faite en bas d'une longue liste paraîtrait sans réponse.
+  useEffect(() => {
+    if (notice || actionError) feedbackRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [notice, actionError])
 
   const { loading, inventory, error } = state
 
@@ -87,17 +105,30 @@ export default function AdminPage() {
         ))}
       </nav>
 
-      {notice && (
-        <p className={styles.notice} role="status">
-          <span>{notice}</span>
-          <button type="button" className={styles.noticeClose} onClick={() => setNotice(null)} aria-label="Fermer le message">
-            ×
-          </button>
-        </p>
-      )}
+      {/* Retour de la dernière action : refus (sans dialogue) ou succès. */}
+      <div ref={feedbackRef}>
+        {actionError && (
+          <p className={styles.errorBox} role="alert">
+            {actionError}
+          </p>
+        )}
+        {notice && (
+          <p className={styles.notice} role="status">
+            <span>{notice}</span>
+            <button
+              type="button"
+              className={styles.noticeClose}
+              onClick={() => setNotice(null)}
+              aria-label="Fermer le message"
+            >
+              ×
+            </button>
+          </p>
+        )}
+      </div>
       {error && <p className={styles.error} role="alert">{error}</p>}
       {loading && <p>Chargement…</p>}
-      {inventory && <Outlet context={{ inventory, reload, afterAction }} />}
+      {inventory && <Outlet context={{ inventory, reload, afterAction, reportError }} />}
     </div>
   )
 }

@@ -50,6 +50,30 @@ export async function purgeAccount(accountId, confirm) {
   return response.data
 }
 
+// --- Groupes (J6b-2) ----------------------------------------------------------------
+
+export async function addToGroup(profileId, slug) {
+  const response = await api.put(`${ADMIN}/profiles/${profileId}/groups/${slug}`)
+  return response.data
+}
+
+export async function removeFromGroup(profileId, slug) {
+  const response = await api.delete(`${ADMIN}/profiles/${profileId}/groups/${slug}`)
+  return response.data
+}
+
+// --- Recettes (J6b-2) ---------------------------------------------------------------
+
+export async function getAdminRecipes() {
+  const response = await api.get(`${ADMIN}/recipes`)
+  return response.data
+}
+
+export async function reassignRecipe(recipeId, profileId) {
+  const response = await api.put(`${ADMIN}/recipes/${recipeId}/owner`, { profile_id: profileId })
+  return response.data
+}
+
 // --- Profils ---------------------------------------------------------------------
 
 export async function deactivateProfile(profileId) {
