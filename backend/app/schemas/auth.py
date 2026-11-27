@@ -55,5 +55,7 @@ class SessionRead(BaseModel):
     profile: ProfileRead | None = None
     theme: ThemeRead | None = None  # thème actif, décidé par theme_for (None = neutre)
     theme_options: list[ThemeRead] = []  # ≥ 2 → le front affiche le sélecteur
+    # Décidé par profile_service.can_switch_profile ; défaut FERMÉ (comme can_edit).
+    can_switch_profile: bool = False
 
     model_config = {"from_attributes": True}

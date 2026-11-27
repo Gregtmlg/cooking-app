@@ -3,8 +3,10 @@
     padding: 1rem 2rem;
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap; /* mobile : l'en-tête passe à la ligne au lieu de déborder (J6a) */
     align-items: center;
     justify-content: space-between;
+    gap: 0.75rem 1.5rem;
 }
 
 .logo {
@@ -16,7 +18,8 @@
 .nav {
     display: flex;
     flex-direction: row;
-    gap: 1.5rem;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
 }
 
 .navLink {
@@ -37,8 +40,9 @@
 
 .session {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
 }
 
 .profileName {
@@ -75,4 +79,16 @@
   width: auto;
   padding: 0.25rem 0.5rem;
   font-size: 0.9rem;
+}
+
+/* Correctif MINIMAL du débordement mobile (J6a). La vraie solution — le menu déroulant
+   sur l'avatar — arrive avec le relooking v1 et remplacera cet en-tête. */
+@media (max-width: 640px) {
+  .header {
+    padding: 0.75rem 1rem;
+  }
+
+  .main {
+    padding: 1rem;
+  }
 }
