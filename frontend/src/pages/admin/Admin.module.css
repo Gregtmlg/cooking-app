@@ -165,3 +165,84 @@
   background-color: var(--color-text-muted);
   border-color: var(--color-text-muted);
 }
+
+/* --- Actions (J6b-1) ----------------------------------------------------------- */
+
+/* Message de succès de la dernière action : il décrit ce que la liste montre déjà. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+  border: 0.5px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-light);
+}
+
+.noticeClose {
+  font: inherit;
+  font-size: 1.2rem;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-md);
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: var(--space-xs);
+}
+
+.primaryButton,
+.actionButton,
+.dangerButton {
+  font: inherit;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.primaryButton {
+  font-size: 0.95rem;
+  padding: 0.45rem 1rem;
+  background-color: var(--color-accent);
+  color: var(--color-surface);
+  border: 0.5px solid var(--color-accent);
+}
+
+.actionButton,
+.dangerButton {
+  font-size: 0.82rem;
+  padding: 0.2rem 0.6rem;
+  background: transparent;
+}
+
+.actionButton {
+  color: var(--color-accent);
+  border: 0.5px solid var(--color-accent);
+}
+
+.dangerButton {
+  color: var(--color-dark);
+  border: 1px solid var(--color-dark);
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  margin-top: var(--space-xs);
+}
+
+/* Nom à retaper pour une purge : bien visible, police à chasse fixe. */
+.typeMe {
+  font-family: monospace;
+  color: var(--color-text);
+}

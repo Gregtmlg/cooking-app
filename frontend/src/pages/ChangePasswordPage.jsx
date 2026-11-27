@@ -6,12 +6,9 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { MAX_LENGTH, MIN_LENGTH, checkNewPassword } from '../auth/password'
 import { ROUTES } from '../routes'
 import styles from './AuthForm.module.css'
-
-// Miroir des bornes backend (account_service) — pour un message immédiat.
-const MIN_LENGTH = 8
-const MAX_LENGTH = 128
 
 function errorMessage(err) {
   const status = err.response?.status
@@ -42,12 +39,9 @@ export default function ChangePasswordPage() {
     e.preventDefault()
     setError(null)
 
-    if (newPassword !== confirmation) {
-      setError('Les deux nouveaux mots de passe ne correspondent pas.')
-      return
-    }
-    if (newPassword.length < MIN_LENGTH || newPassword.length > MAX_LENGTH) {
-      setError(`Le mot de passe doit contenir entre ${MIN_LENGTH} et ${MAX_LENGTH} caractères.`)
+    const problem = checkNewPassword(newPassword, confirmation)
+    if (problem) {
+      setError(problem)
       return
     }
 

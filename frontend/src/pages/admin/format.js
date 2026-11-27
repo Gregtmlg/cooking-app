@@ -15,3 +15,13 @@ export function groupNames(slugs, groups) {
   const bySlug = Object.fromEntries(groups.map((g) => [g.slug, g.name]))
   return slugs.map((slug) => bySlug[slug] ?? slug).join(', ')
 }
+
+// Message après une purge, à partir de la réponse du serveur (PurgeRead : des ids et
+// des compteurs, aucun nom — le nom vient de ce que l'admin a sous les yeux).
+// `mentionAccount` : faux pour la purge d'un compte (sa suppression va de soi).
+export function purgeMessage(subject, result, mentionAccount = true) {
+  const recipes = `${result.recipes_reassigned} recette(s) transférée(s) à Système`
+  const account =
+    mentionAccount && result.account_deleted ? ' Le compte, devenu vide, a été supprimé.' : ''
+  return `${subject} purgé : ${recipes}.${account}`
+}

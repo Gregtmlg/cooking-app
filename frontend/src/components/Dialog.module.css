@@ -1,0 +1,69 @@
+.dialog {
+  width: min(28rem, calc(100vw - 2rem));
+  margin: auto;
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+.title {
+  font-size: 1.3rem;
+  margin-bottom: var(--space-md);
+}
+
+.error {
+  color: var(--color-accent);
+  margin-bottom: var(--space-md);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+.cancel,
+.submit {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.cancel {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 0.5px solid var(--color-border);
+}
+
+.submit {
+  background-color: var(--color-accent);
+  color: var(--color-surface);
+  border: 0.5px solid var(--color-accent);
+}
+
+.danger {
+  background-color: var(--color-dark);
+  border-color: var(--color-dark);
+}
+
+.cancel:disabled,
+.submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

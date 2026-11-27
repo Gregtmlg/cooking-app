@@ -3,9 +3,12 @@
 // Le retour arrière, le rechargement et les favoris gardent donc l'onglet ouvert.
 //
 // Cette page charge l'inventaire UNE fois et le confie à son <Outlet /> : chaque onglet
-// le lit avec useOutletContext(), sans nouvel appel. `reload` sera appelé par les
-// actions du J6b : après une écriture, on RELIT le serveur plutôt que de corriger la
-// liste à la main (sinon il faudrait recopier ses règles en React — principe 8).
+// le lit avec useOutletContext(), sans nouvel appel.
+//
+// Après une action (J6b), les onglets appellent `afterAction(message)` : on RELIT le
+// serveur plutôt que de corriger la liste à la main (sinon il faudrait recopier ses
+// règles en React — principe 8), PUIS on affiche le message : il décrit ainsi ce que
+// la liste montre déjà.
 //
 // Elle ne redirige jamais : un 401 est traité par l'intercepteur + RequireAuth ;
 // un 403 (droits perdus) n'a pas de code → la page affiche simplement l'erreur.
@@ -37,6 +40,7 @@ async function fetchInventory() {
 
 export default function AdminPage() {
   const [state, setState] = useState({ loading: true, inventory: null, error: null })
+  const [notice, setNotice] = useState(null) // message de succès de la dernière action
 
   // Chargement initial — même motif qu'AuthProvider : setState seulement dans le
   // callback de la réponse, et drapeau `ignore` si la page est quittée avant.
@@ -57,6 +61,15 @@ export default function AdminPage() {
     setState((prev) => ({ ...prev, ...result, loading: false }))
   }, [])
 
+  // Point UNIQUE de fin d'action : relire d'abord, annoncer ensuite (décision E4).
+  const afterAction = useCallback(
+    async (message) => {
+      await reload()
+      setNotice(message)
+    },
+    [reload],
+  )
+
   const { loading, inventory, error } = state
 
   return (
@@ -74,9 +87,17 @@ export default function AdminPage() {
         ))}
       </nav>
 
+      {notice && (
+        <p className={styles.notice} role="status">
+          <span>{notice}</span>
+          <button type="button" className={styles.noticeClose} onClick={() => setNotice(null)} aria-label="Fermer le message">
+            ×
+          </button>
+        </p>
+      )}
       {error && <p className={styles.error} role="alert">{error}</p>}
       {loading && <p>Chargement…</p>}
-      {inventory && <Outlet context={{ inventory, reload }} />}
+      {inventory && <Outlet context={{ inventory, reload, afterAction }} />}
     </div>
   )
 }
