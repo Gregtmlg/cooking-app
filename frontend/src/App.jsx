@@ -19,6 +19,7 @@ import InventoryTab from './pages/admin/InventoryTab.jsx'
 import AccountsTab from './pages/admin/AccountsTab.jsx'
 import ProfilesTab from './pages/admin/ProfilesTab.jsx'
 import GroupsTab from './pages/admin/GroupsTab.jsx'
+import ReassignTab from './pages/admin/ReassignTab.jsx'
 import Layout from './components/Layout.jsx'
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
                   <Route path={ROUTES.adminAccounts} element={<AccountsTab />} />
                   <Route path={ROUTES.adminProfiles} element={<ProfilesTab />} />
                   <Route path={ROUTES.adminGroups} element={<GroupsTab />} />
+                  <Route path={ROUTES.adminReassign} element={<ReassignTab />} />
                 </Route>
               </Route>
             </Route>

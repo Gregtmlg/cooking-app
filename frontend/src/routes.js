@@ -22,4 +22,5 @@ export const ROUTES = {
   adminAccounts: '/admin/comptes',
   adminProfiles: '/admin/profils',
   adminGroups: '/admin/groupes',
+  adminReassign: '/admin/reattributions',
 }

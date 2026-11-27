@@ -72,6 +72,41 @@ class OwnerChange(BaseModel):
     model_config = {"extra": "forbid"}
 
 
+class OwnerSummaryRead(BaseModel):
+    """Le propriétaire d'une recette, tel que l'affiche l'onglet Réattributions."""
+
+    profile_id: int
+    display_name: str
+    account_username: str
+    is_system: bool
+
+
+class AdminRecipeRead(BaseModel):
+    """Une recette vue par le back-office (J6b-2) : distinct de `RecipeRead` (pas
+    d'ingrédients ni d'audience, mais le propriétaire). `owner` peut être None :
+    la colonne `owner_id` est nullable (migration additive), même si la prod n'en a plus."""
+
+    id: int
+    title: str
+    owner: OwnerSummaryRead | None
+
+    @classmethod
+    def from_recipe(cls, recipe) -> "AdminRecipeRead":
+        owner = recipe.owner
+        return cls(
+            id=recipe.id,
+            title=recipe.title,
+            owner=OwnerSummaryRead(
+                profile_id=owner.id,
+                display_name=owner.display_name,
+                account_username=owner.account.username,
+                is_system=owner.account.is_system,
+            )
+            if owner
+            else None,
+        )
+
+
 class OwnerRead(BaseModel):
     recipe_id: int
     owner_id: int
