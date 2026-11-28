@@ -94,9 +94,10 @@ export default function ReassignTab() {
     }
   }, [])
 
-  // Nouveaux propriétaires proposés (décisions E3 / E3-bis) : profils ACTIFS hors
-  // Système, plus le profil Système. Choix d'options seulement — aucune règle serveur.
-  const candidates = inventory.accounts.flatMap((account) =>
+  // Nouveaux propriétaires proposés (décisions E3 / E3-bis, G4) : profils ACTIFS hors
+  // Système et hors compte admin (modérateur, pas auteur), plus le profil Système.
+  // Choix d'options seulement — aucune règle serveur.
+  const candidates = inventory.accounts.filter((account) => !account.is_admin).flatMap((account) =>
     account.profiles
       .filter((profile) => account.is_system || !profile.deactivated_at)
       .map((profile) => ({

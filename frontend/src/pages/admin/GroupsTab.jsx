@@ -19,10 +19,11 @@ function GroupCard({ group, accounts }) {
       .filter((profile) => profile.groups.includes(group.slug))
       .map((profile) => ({ account, profile })),
   )
-  // Proposés à l'ajout (décision F2) : actifs, hors Système, pas déjà membres.
-  // Simple choix d'options : le serveur reste juge (409 « déjà membre », Système refusé).
+  // Proposés à l'ajout (décisions F2, G4) : actifs, hors Système, hors compte admin
+  // (« admin sans groupe », cahier §7.1), pas déjà membres. Simple choix d'options :
+  // le serveur reste juge (409 « déjà membre », Système refusé).
   const candidates = accounts
-    .filter((account) => !account.is_system)
+    .filter((account) => !account.is_system && !account.is_admin)
     .flatMap((account) =>
       account.profiles
         .filter((profile) => !profile.deactivated_at && !profile.groups.includes(group.slug))
